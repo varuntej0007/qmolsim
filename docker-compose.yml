@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  qmolsim-main:
+    build: .
+    ports:
+      - "5000:5000"
+    command: python phase3/api.py
+    volumes:
+      - ./reports:/app/reports
+      - ./phase2/data:/app/phase2/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  qmolsim-msn:
+    build: .
+    ports:
+      - "5001:5001"
+    command: python msn/msn_api.py
+    volumes:
+      - ./reports:/app/reports
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+networks:
+  default:
+    name: qmolsim-network

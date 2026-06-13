@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QMolSim — Login</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0a0e1a;color:#e0e6f0;
+     min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-box{background:#111827;border:1px solid #7c3aed;border-radius:14px;
+           padding:40px 36px;width:100%;max-width:400px}
+h1{font-size:1.3rem;color:#a78bfa;margin-bottom:4px}
+.sub{font-size:0.78rem;color:#8899bb;margin-bottom:28px}
+label{font-size:0.8rem;color:#8899bb;display:block;margin-bottom:5px}
+input{width:100%;background:#0a0e1a;border:1px solid #2a3a5a;color:#e0e6f0;
+      padding:11px 14px;border-radius:7px;font-size:0.9rem;margin-bottom:16px}
+input:focus{outline:none;border-color:#7c3aed}
+.btn{width:100%;background:#7c3aed;color:#fff;border:none;padding:12px;
+     border-radius:7px;font-weight:bold;cursor:pointer;font-size:0.95rem}
+.btn:hover{background:#6d28d9}
+.error{background:#2a0d0d;border:1px solid #e05050;color:#e05050;
+       border-radius:6px;padding:10px;font-size:0.82rem;margin-bottom:14px;display:none}
+.footer{text-align:center;font-size:0.72rem;color:#4a6a9a;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="login-box">
+  <h1>⚗ QMolSim</h1>
+  <div class="sub">MSN Laboratories — Pharmaceutical Intelligence Platform</div>
+  <div class="error" id="err"></div>
+  <label>Username</label>
+  <input type="text" id="username" placeholder="Enter username" autocomplete="username"/>
+  <label>Password</label>
+  <input type="password" id="password" placeholder="Enter password"
+         autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"/>
+  <button class="btn" onclick="login()">Sign In</button>
+  <div class="footer">
+    Secure access · Session expires in 8 hours<br>
+    All actions are audit-logged per 21 CFR Part 11
+  </div>
+</div>
+<script>
+async function login(){
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const err      = document.getElementById('err');
+  err.style.display = 'none';
+  if(!username || !password){ err.textContent='Enter username and password'; err.style.display='block'; return; }
+  try{
+    const r = await fetch('/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const d = await r.json();
+    if(!r.ok){ err.textContent = d.error||'Login failed'; err.style.display='block'; return; }
+    localStorage.setItem('auth_token', d.token);
+    localStorage.setItem('qmolsim_user', JSON.stringify(d.user));
+    window.location.href = '/msn';
+  }catch(e){ err.textContent='Connection error'; err.style.display='block'; }
+}
+</script>
+</body>
+</html>

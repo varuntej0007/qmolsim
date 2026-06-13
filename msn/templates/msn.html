@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QMolSim MSN Edition</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0a0e1a;color:#e0e6f0;min-height:100vh}
+header{background:linear-gradient(135deg,#1a0a2e,#0d1b3e);padding:18px 36px;border-bottom:2px solid #7c3aed;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+header h1{font-size:1.4rem;color:#a78bfa;letter-spacing:1px}
+header p{font-size:0.78rem;color:#8899bb;margin-top:2px}
+.badge{background:#7c3aed;color:#fff;font-size:0.62rem;font-weight:bold;padding:2px 7px;border-radius:4px;margin-left:6px}
+.mbadge{background:#059669;color:#fff;font-size:0.62rem;padding:2px 7px;border-radius:4px;margin-left:4px}
+.container{max-width:1200px;margin:0 auto;padding:24px 18px}
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid #1e2d4a;padding-bottom:0}
+.tab{padding:10px 20px;cursor:pointer;font-size:0.85rem;color:#8899bb;border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px}
+.tab:hover{color:#a78bfa}
+.tab.active{color:#a78bfa;border-bottom-color:#7c3aed;font-weight:600}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:#111827;border:1px solid #1e2d4a;border-radius:10px;padding:20px;margin-bottom:16px}
+.card h2{font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:#7c3aed;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+input[type=text],select{background:#0a0e1a;border:1px solid #2a3a5a;color:#e0e6f0;padding:10px 13px;border-radius:7px;font-size:0.85rem;font-family:monospace}
+input[type=text]{flex:1;min-width:200px}
+input[type=text]:focus,select:focus{outline:none;border-color:#7c3aed}
+.btn{background:#7c3aed;color:#fff;border:none;padding:10px 22px;border-radius:7px;font-weight:bold;cursor:pointer;font-size:0.85rem;transition:background 0.2s}
+.btn:hover{background:#6d28d9}
+.btn:disabled{background:#2a1a4a;color:#5a3a8a;cursor:not-allowed}
+.btn-green{background:#059669}
+.btn-green:hover{background:#047857}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pbt{background:#1a2535;border:1px solid #2a3a5a;color:#8899bb;padding:4px 11px;border-radius:5px;font-size:0.75rem;cursor:pointer;transition:all 0.2s}
+.pbt:hover{border-color:#7c3aed;color:#a78bfa}
+.loading{display:none;text-align:center;padding:30px;color:#a78bfa}
+.spinner{display:inline-block;width:26px;height:26px;border:3px solid #2a1a4a;border-top:3px solid #7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.results{display:none}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:14px}
+.prop{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a2535;font-size:0.83rem}
+.prop:last-child{border-bottom:none}
+.prop .l{color:#8899bb}
+.prop .v{color:#e0e6f0;font-weight:500;text-align:right;max-width:60%}
+.pass{color:#059669!important}
+.fail{color:#e05050!important}
+.warn{color:#f0a500!important}
+.hi{color:#a78bfa!important}
+.tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:0.72rem;margin:2px}
+.tg{background:#0d3a2a;color:#1D9E75}
+.tr{background:#3a0d0d;color:#e05050}
+.ta{background:#3a2a0d;color:#f0a500}
+.tv{background:#1a0d3a;color:#a78bfa}
+.hero{background:linear-gradient(135deg,#1a0a2e,#0d1b3e);border:1px solid #7c3aed;border-radius:10px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.score-c{width:80px;height:80px;border-radius:50%;border:3px solid #7c3aed;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.score-c .n{font-size:1.5rem;font-weight:bold;color:#a78bfa}
+.score-c .l{font-size:0.58rem;color:#8899bb}
+.flag-card{background:#1a0a2e;border:1px solid #7c3aed;border-radius:8px;padding:14px;margin-bottom:14px}
+.flag-card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#7c3aed;margin-bottom:10px}
+.flag-item{display:flex;gap:8px;padding:5px 0;font-size:0.82rem;border-bottom:1px solid #1a1040}
+.flag-item:last-child{border-bottom:none}
+.fi{flex-shrink:0}
+.error-msg{background:#2a0d0d;border:1px solid #e05050;border-radius:7px;padding:12px;color:#e05050;display:none;margin-bottom:12px;font-size:0.83rem}
+.imp-row{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #1a2535;font-size:0.82rem}
+.imp-row:last-child{border-bottom:none}
+.risk-high{color:#e05050}
+.risk-mod{color:#f0a500}
+.risk-low{color:#059669}
+table{width:100%;border-collapse:collapse;font-size:0.82rem}
+th{text-align:left;padding:6px 8px;color:#4a6a9a;border-bottom:1px solid #1e2d4a}
+td{padding:6px 8px;border-bottom:1px solid #1a2535}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>⚗ QMolSim <span class="badge">MSN Edition</span><span class="mbadge">API Manufacturing</span></h1>
+    <p>Quantum-enhanced API quality profiling, impurity screening & polymorph analysis — MSN Labs, Hyderabad</p>
+  </div>
+  <div style="font-size:0.75rem;color:#4a6a9a;text-align:right">
+    <div style="display:flex;gap:8px;align-items:center"><a href="/msn" style="color:#a78bfa;text-decoration:none;font-size:0.78rem;padding:6px 12px;border:1px solid #7c3aed;border-radius:6px">⚗ API Profiler</a><a href="/executive" style="color:#8899bb;text-decoration:none;font-size:0.78rem;padding:6px 12px;border:1px solid #2a3a5a;border-radius:6px">📊 Executive Dashboard</a><span style="font-size:0.72rem;color:#4a6a9a">● Live on Raspberry Pi 5</span></div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('profile')">API Quality Profiler</div>
+    <div class="tab" onclick="switchTab('impurity')">Impurity Screener</div>
+    <div class="tab" onclick="switchTab('polymorph')">Polymorph Analyzer</div>
+    <div class="tab" onclick="switchTab('portfolio')">MSN Portfolio</div>
+    <div class="tab" onclick="switchTab('batch')">Batch Upload</div>
+    <div class="tab" onclick="switchTab('roadmap')">Dev Roadmap</div>
+    <div class="tab" onclick="switchTab('copilot')">AI Copilot</div>
+    <div class="tab" onclick="switchTab('benchmark')">Benchmarking</div>
+  </div>
+  <!-- ── TAB BENCHMARK ── -->
+  <div class="panel" id="tab-benchmark">
+    <div class="card">
+      <h2>Competitive Benchmarking</h2>
+      <p style="font-size:0.82rem;color:#8899bb;margin-bottom:14px">
+        Compare your API against 20 industry reference molecules across quality, manufacturing, safety and solubility dimensions.
+      </p>
+      <div class="row">
+        <input type="text" id="bm_smiles" placeholder="SMILES string"/>
+        <input type="text" id="bm_name" placeholder="API Name" style="max-width:160px"/>
+        <button class="btn" onclick="runBenchmark()">Benchmark API</button>
+      </div>
+      <div class="presets">
+        <span style="font-size:0.73rem;color:#4a6a9a;margin-right:4px">Load:</span>
+        <button class="pbt" onclick="document.getElementById('bm_smiles').value='CN(C)C(=N)NC(=N)N';document.getElementById('bm_name').value='Metformin'">Metformin</button>
+        <button class="pbt" onclick="document.getElementById('bm_smiles').value='CC(C)c1c(C(=O)Nc2ccccc2F)c(-c2ccccc2)c(-c2ccc(F)cc2)n1CCC(O)CC(O)CC(=O)O';document.getElementById('bm_name').value='Atorvastatin'">Atorvastatin</button>
+        <button class="pbt" onclick="document.getElementById('bm_smiles').value='O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O';document.getElementById('bm_name').value='Ciprofloxacin'">Ciprofloxacin</button>
+      </div>
+    </div>
+    <div class="loading" id="bm_loading"><div class="spinner"></div><div>Benchmarking against industry...</div></div>
+    <div class="error-msg" id="bm_error"></div>
+    <div class="results" id="bm_results"></div>
+  </div>
+  <!-- ── TAB COPILOT ── -->
+  <div class="panel" id="tab-copilot">
+    <div class="card">
+      <h2>AI Regulatory Copilot</h2>
+      <p style="font-size:0.82rem;color:#8899bb;margin-bottom:14px">
+        Ask any CMC, regulatory, or manufacturing question. Load a molecule profile first for context-aware answers.
+      </p>
+      <div class="row" style="margin-bottom:10px">
+        <input type="text" id="cp_smiles" placeholder="Optional: SMILES for context" style="max-width:320px"/>
+        <input type="text" id="cp_name" placeholder="API Name" style="max-width:140px"/>
+        <button class="btn" style="background:#1a2535;border:1px solid #7c3aed;color:#a78bfa" onclick="loadCopilotContext()">Load Context</button>
+      </div>
+      <div id="cp_context" style="display:none;background:#1a1040;border:1px solid #7c3aed;border-radius:6px;padding:10px;margin-bottom:12px;font-size:0.75rem;color:#8899bb"></div>
+      <div id="cp_chat" style="background:#0a0e1a;border:1px solid #1e2d4a;border-radius:8px;padding:14px;min-height:300px;max-height:500px;overflow-y:auto;margin-bottom:12px;font-size:0.85rem;line-height:1.6">
+        <div style="color:#4a6a9a;text-align:center;padding:40px 0">
+          Ask a regulatory or CMC question to get started.<br>
+          <span style="font-size:0.75rem">e.g. "What stability studies do I need?" or "Why is Atorvastatin high risk?"</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="cp_input" placeholder="Ask a regulatory or CMC question..."
+          style="flex:1;background:#111827;border:1px solid #2a3a5a;color:#e0e6f0;padding:11px 14px;border-radius:8px;font-size:0.85rem"
+          onkeydown="if(event.key==='Enter')sendCopilot()"/>
+        <button class="btn" onclick="sendCopilot()">Send</button>
+        <button class="btn" style="background:#1a2535;border:1px solid #2a3a5a;color:#8899bb" onclick="clearChat()">Clear</button>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <span style="font-size:0.72rem;color:#4a6a9a">Quick questions:</span>
+        <button class="pbt" onclick="quickAsk('What stability studies are required?')">Stability studies?</button>
+        <button class="pbt" onclick="quickAsk('What are the ICH M7 requirements?')">ICH M7?</button>
+        <button class="pbt" onclick="quickAsk('How do I handle genotoxic impurities?')">Genotox impurities?</button>
+        <button class="pbt" onclick="quickAsk('What is the estimated development cost and timeline?')">Cost & timeline?</button>
+        <button class="pbt" onclick="quickAsk('What DMF sections are required for FDA submission?')">DMF sections?</button>
+        <button class="pbt" onclick="quickAsk('How should I handle polymorphism?')">Polymorphism?</button>
+      </div>
+    </div>
+  </div>
+  <!-- ── TAB ROADMAP ── -->
+  <div class="panel" id="tab-roadmap">
+    <div class="card">
+      <h2>Development Roadmap Engine</h2>
+      <p style="font-size:0.82rem;color:#8899bb;margin-bottom:14px">
+        Auto-generates a complete ICH-compliant CMC study plan with timelines, costs, and go/no-go gates.
+      </p>
+      <div class="row">
+        <input type="text" id="rm_smiles" placeholder="SMILES string"/>
+        <input type="text" id="rm_name" placeholder="API Name" style="max-width:160px"/>
+        <button class="btn" onclick="runRoadmap()">Generate Roadmap</button>
+      </div>
+      <div class="presets">
+        <span style="font-size:0.73rem;color:#4a6a9a;margin-right:4px">Load:</span>
+        <button class="pbt" onclick="document.getElementById('rm_smiles').value='CN(C)C(=N)NC(=N)N';document.getElementById('rm_name').value='Metformin'">Metformin</button>
+        <button class="pbt" onclick="document.getElementById('rm_smiles').value='CC(C)c1c(C(=O)Nc2ccccc2F)c(-c2ccccc2)c(-c2ccc(F)cc2)n1CCC(O)CC(O)CC(=O)O';document.getElementById('rm_name').value='Atorvastatin'">Atorvastatin</button>
+        <button class="pbt" onclick="document.getElementById('rm_smiles').value='O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O';document.getElementById('rm_name').value='Ciprofloxacin'">Ciprofloxacin</button>
+      </div>
+    </div>
+    <div class="loading" id="rm_loading"><div class="spinner"></div><div>Generating roadmap...</div></div>
+    <div class="error-msg" id="rm_error"></div>
+    <div class="results" id="rm_results"></div>
+  </div>
+  <!-- ── TAB 1: API PROFILER ── -->
+  <div class="panel active" id="tab-profile">
+    <div class="card">
+      <h2>API Quality & Regulatory Readiness</h2>
+      <div class="row">
+        <input type="text" id="p_smiles" placeholder="SMILES string"/>
+        <input type="text" id="p_name" placeholder="API Name" style="max-width:150px"/>
+        <input type="text" id="p_cat" placeholder="Category" style="max-width:150px"/>
+        <button class="btn" onclick="runProfile()">Analyse API</button>
+	<button class="btn" id="pdfBtn" onclick="downloadReport()" style="background:#059669;margin-left:4px">⬇ PDF Report</button>
+	<button class="btn" id="allPdfBtn" onclick="downloadAllReports()" style="background:#7c3aed;margin-left:4px">⬇ All Portfolio PDFs</button>
+      </div>
+      <div class="presets">
+        <span style="font-size:0.73rem;color:#4a6a9a;margin-right:4px">MSN Portfolio:</span>
+        <button class="pbt" onclick="lp('CN(C)C(=N)NC(=N)N','Metformin','Antidiabetic')">Metformin</button>
+        <button class="pbt" onclick="lp('CC(C)c1c(C(=O)Nc2ccccc2F)c(-c2ccccc2)c(-c2ccc(F)cc2)n1CCC(O)CC(O)CC(=O)O','Atorvastatin','Antilipidemic')">Atorvastatin</button>
+        <button class="pbt" onclick="lp('CCOC(=O)C1=C(COCCN)NC(C)=C(C(=O)OCC)C1c1ccccc1Cl','Amlodipine','Antihypertensive')">Amlodipine</button>
+        <button class="pbt" onclick="lp('COc1ccc2[nH]c(S(=O)Cc3ncc(OC)c(OC)c3OC)nc2c1','Pantoprazole','PPI')">Pantoprazole</button>
+        <button class="pbt" onclick="lp('O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O','Ciprofloxacin','Antibiotic')">Ciprofloxacin</button>
+        <button class="pbt" onclick="lp('COc1ccc2[nH]c(S(=O)Cc3ncc(C)c(OC)c3C)nc2c1','Omeprazole','PPI')">Omeprazole</button>
+      </div>
+    </div>
+    <div class="loading" id="p_loading"><div class="spinner"></div><div id="p_lmsg">Analysing API...</div></div>
+    <div class="error-msg" id="p_error"></div>
+<div class="results" id="p_results"></div>
+<div id="mfgCard" style="display:none;margin-top:14px">
+  <div class="card">
+    <h2>Manufacturing Complexity Score</h2>
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+      <div style="text-align:center;flex-shrink:0">
+        <div id="mfgScoreNum"
+          style="font-size:3rem;font-weight:bold;line-height:1;width:100px;
+                 height:100px;border-radius:50%;border:4px solid #7c3aed;
+                 display:flex;align-items:center;justify-content:center;
+                 margin:0 auto">0</div>
+        <div style="font-size:0.7rem;color:#8899bb;margin-top:6px">/ 100</div>
+        <div id="mfgBand" style="font-size:0.85rem;font-weight:bold;margin-top:4px"></div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div id="mfgCogs" style="font-size:0.82rem;color:#8899bb;margin-bottom:4px"></div>
+        <div id="mfgTimeline" style="font-size:0.82rem;color:#8899bb;margin-bottom:10px"></div>
+        <div id="mfgDrivers" style="margin-bottom:10px"></div>
+        <div id="mfgRecs"></div>
+      </div>
+      <div style="flex:1;min-width:240px" id="mfgBreakdown"></div>
+    </div>
+  </div>
+</div>
+<div id="structureCard" style="display:none;margin-top:14px">
+  <div class="card">
+    <h2>2D Molecular Structure</h2>
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+      <img id="structureImg"
+        style="border-radius:8px;border:1px solid #1e2d4a;background:#111827;max-width:400px;width:100%"
+        src="" alt="Molecule structure"/>
+      <div id="structureMeta" style="flex:1;min-width:200px;font-size:0.82rem;color:#8899bb;line-height:1.8"></div>
+    </div>
+  </div>
+</div>
+  </div>
+
+  <!-- ── TAB 2: IMPURITY ── -->
+  <div class="panel" id="tab-impurity">
+    <div class="card">
+      <h2>Synthesis Impurity Screening (ICH Q3B / M7)</h2>
+      <div class="row">
+        <input type="text" id="i_smiles" placeholder="Parent API SMILES"/>
+        <input type="text" id="i_name" placeholder="API Name" style="max-width:150px"/>
+        <button class="btn btn-green" onclick="runImpurity()">Screen Impurities</button>
+      </div>
+      <div class="presets">
+        <span style="font-size:0.73rem;color:#4a6a9a;margin-right:4px">Load:</span>
+        <button class="pbt" onclick="li('CN(C)C(=N)NC(=N)N','Metformin')">Metformin</button>
+        <button class="pbt" onclick="li('COc1ccc2[nH]c(S(=O)Cc3ncc(OC)c(OC)c3OC)nc2c1','Pantoprazole')">Pantoprazole</button>
+        <button class="pbt" onclick="li('O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O','Ciprofloxacin')">Ciprofloxacin</button>
+        <button class="pbt" onclick="li('COc1ccc2[nH]c(S(=O)Cc3ncc(C)c(OC)c3C)nc2c1','Omeprazole')">Omeprazole</button>
+      </div>
+    </div>
+    <div class="loading" id="i_loading"><div class="spinner"></div><div>Generating impurities...</div></div>
+    <div class="error-msg" id="i_error"></div>
+    <div class="results" id="i_results"></div>
+  </div>
+
+  <!-- ── TAB 3: POLYMORPH ── -->
+  <div class="panel" id="tab-polymorph">
+    <div class="card">
+      <h2>Polymorph Stability Analysis</h2>
+      <p style="font-size:0.82rem;color:#8899bb;margin-bottom:14px">
+        Computes ground-state energy for each crystal form. Lower energy = more stable = preferred for manufacturing.
+        Enable VQE for quantum-accurate results (slower).
+      </p>
+      <div class="row">
+        <input type="text" id="poly_name" placeholder="API Name e.g. Metformin HCl" style="max-width:220px"/>
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.83rem;color:#8899bb;cursor:pointer">
+          <input type="checkbox" id="poly_vqe" style="width:14px;height:14px;accent-color:#7c3aed"/>
+          Use VQE (quantum — slow)
+        </label>
+        <button class="btn" onclick="runPolymorph()">Analyse Polymorphs</button>
+      </div>
+      <div class="presets">
+        <span style="font-size:0.73rem;color:#4a6a9a;margin-right:4px">Demo:</span>
+        <button class="pbt" onclick="loadPolyDemo()">Metformin HCl Form A vs B</button>
+      </div>
+    </div>
+    <div class="loading" id="poly_loading"><div class="spinner"></div><div id="poly_lmsg">Computing energies...</div></div>
+    <div class="error-msg" id="poly_error"></div>
+    <div class="results" id="poly_results"></div>
+  </div>
+  <!-- ── TAB BATCH ── -->
+  <div class="panel" id="tab-batch">
+    <div class="card">
+      <h2>Batch Molecule Screening</h2>
+      <p style="font-size:0.82rem;color:#8899bb;margin-bottom:14px">
+        Upload a CSV file with columns: <code style="color:#a78bfa">smiles, name, category</code>
+        — supports up to 500 molecules. Results ranked by API score.
+      </p>
+      <div class="row" style="align-items:center">
+        <input type="file" id="batchFile" accept=".csv"
+          style="background:#0a0e1a;border:1px solid #2a3a5a;color:#e0e6f0;
+                 padding:10px;border-radius:7px;font-size:0.85rem;flex:1"/>
+        <button class="btn" onclick="runBatch()">Upload &amp; Screen</button>
+        <button class="btn" style="background:#1a2535;border:1px solid #2a3a5a;color:#8899bb"
+          onclick="downloadSampleCSV()">Download Sample CSV</button>
+      </div>
+      <div style="margin-top:10px;font-size:0.75rem;color:#4a6a9a">
+        Or paste CSV directly:
+        <textarea id="batchText"
+          style="width:100%;margin-top:6px;background:#0a0e1a;border:1px solid #2a3a5a;
+                 color:#e0e6f0;padding:10px;border-radius:7px;font-family:monospace;
+                 font-size:0.78rem;height:80px;resize:vertical"
+          placeholder="smiles,name,category&#10;CN(C)C(=N)NC(=N)N,Metformin,Antidiabetic&#10;CCO,Ethanol,Solvent"></textarea>
+      </div>
+    </div>
+    <div class="loading" id="b_loading">
+      <div class="spinner"></div>
+      <div id="b_lmsg">Processing molecules...</div>
+    </div>
+    <div class="error-msg" id="b_error"></div>
+    <div class="results" id="b_results"></div>
+  </div>
+  <!-- ── TAB 4: PORTFOLIO ── -->
+  <div class="panel" id="tab-portfolio">
+    <div class="card">
+      <h2>MSN Labs API Portfolio Analysis</h2>
+      <p style="font-size:0.82rem;color:#8899bb;margin-bottom:14px">
+        Runs API Quality Profiler + Impurity Screener on all 8 molecules in MSN's portfolio. Ranked by regulatory readiness.
+      </p>
+      <button class="btn" onclick="runPortfolio()">Run Full Portfolio Analysis</button>
+    </div>
+    <div class="loading" id="port_loading"><div class="spinner"></div><div>Analysing portfolio...</div></div>
+    <div class="error-msg" id="port_error"></div>
+    <div class="results" id="port_results"></div>
+  </div>
+</div>
+
+<script>
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+function lp(s,n,c){ document.getElementById('p_smiles').value=s; document.getElementById('p_name').value=n; document.getElementById('p_cat').value=c; }
+function li(s,n){ document.getElementById('i_smiles').value=s; document.getElementById('i_name').value=n; }
+
+// ── Profile ──
+async function runProfile(){
+  const smiles=document.getElementById('p_smiles').value.trim();
+  const name=document.getElementById('p_name').value.trim()||'API';
+  const cat=document.getElementById('p_cat').value.trim()||'Unknown';
+  if(!smiles){alert('Enter SMILES');return;}
+  setLoading('p',true);
+  try{
+    const r=await fetch('/msn/profile',{method:'POST',headers:authHeaders(),body:JSON.stringify({smiles,name,category:cat})});
+    const d=await r.json();
+    setLoading('p',false);
+    if(d.error){showErr('p',d.error);return;}
+    renderProfile(d);
+    loadStructure(smiles, d);
+    loadManufacturing(smiles, d);
+  }catch(e){setLoading('p',false);showErr('p',e.message);}
+}
+
+function renderProfile(d){
+  const el=document.getElementById('p_results');
+  const sc=d.api_score;
+  const col=sc>=0.8?'#059669':sc>=0.6?'#f0a500':'#e05050';
+  el.innerHTML=`
+    <div class="hero">
+      <div class="score-c">
+        <span class="n" style="color:${col}">${sc.toFixed(3)}</span>
+        <span class="l">API SCORE</span>
+      </div>
+      <div style="flex:1">
+        <h2 style="font-size:1.1rem;color:#a78bfa;margin-bottom:4px">${d.name} <span style="font-size:0.8rem;color:#8899bb">(${d.category})</span></h2>
+        <div style="font-size:0.82rem;color:#8899bb;margin-bottom:4px">Formula: ${d.formula} &nbsp;|&nbsp; MW: ${d.mw} Da</div>
+        <div style="font-size:0.88rem;color:${col}">${d.regulatory_readiness}</div>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="card">
+        <h2>Physical Properties</h2>
+        <div class="prop"><span class="l">MW</span><span class="v">${d.mw} Da</span></div>
+        <div class="prop"><span class="l">LogP</span><span class="v">${d.logp}</span></div>
+        <div class="prop"><span class="l">LogD (pH 7.4)</span><span class="v">${d.logd_74}</span></div>
+        <div class="prop"><span class="l">pKa estimate</span><span class="v">${d.pka_estimate}</span></div>
+        <div class="prop"><span class="l">TPSA</span><span class="v">${d.tpsa} Å²</span></div>
+        <div class="prop"><span class="l">HBD / HBA</span><span class="v">${d.hbd} / ${d.hba}</span></div>
+        <div class="prop"><span class="l">Chiral centers</span><span class="v ${d.chiral_centers>0?'warn':''}">${d.chiral_centers}</span></div>
+        <div class="prop"><span class="l">fsp3</span><span class="v">${d.fsp3}</span></div>
+      </div>
+      <div class="card">
+        <h2>Solubility & Bioavailability</h2>
+        <div class="prop"><span class="l">Aqueous solubility</span><span class="v ${d.aqueous_solubility==='HIGH'?'pass':d.aqueous_solubility==='VERY LOW'?'fail':'warn'}">${d.aqueous_solubility}</span></div>
+        <div class="prop"><span class="l">BCS Class</span><span class="v hi">${d.solubility_class}</span></div>
+        <div class="prop"><span class="l">Lipinski RO5</span><span class="v ${d.lipinski_pass?'pass':'fail'}">${d.lipinski_pass?'✓ PASS':'✗ FAIL'}</span></div>
+        <div class="prop"><span class="l">Veber rules</span><span class="v ${d.veber_pass?'pass':'fail'}">${d.veber_pass?'✓ PASS':'✗ FAIL'}</span></div>
+        <div class="prop"><span class="l">Synthesis</span><span class="v" style="font-size:0.75rem">${d.synthesis_complexity.split('—')[0]}</span></div>
+      </div>
+      <div class="card">
+        <h2>Stability Profile</h2>
+        <div class="prop"><span class="l">Hydrolysis risk</span><span class="v ${d.hydrolysis_risk==='HIGH'?'fail':'pass'}">${d.hydrolysis_risk}</span></div>
+        <div class="prop"><span class="l">Oxidation risk</span><span class="v ${d.oxidation_risk==='HIGH'?'fail':'pass'}">${d.oxidation_risk}</span></div>
+        <div class="prop"><span class="l">Photosensitive</span><span class="v ${d.photosensitive?'warn':'pass'}">${d.photosensitive?'⚠ Yes':'No'}</span></div>
+        <div class="prop"><span class="l">Hygroscopic</span><span class="v ${d.hygroscopic_risk==='HIGH'?'warn':''}">${d.hygroscopic_risk}</span></div>
+        <div class="prop"><span class="l">Mutagenicity risk</span><span class="v ${d.mutagenicity_risk==='HIGH'?'fail':d.mutagenicity_risk==='MODERATE'?'warn':'pass'}">${d.mutagenicity_risk}</span></div>
+        <div class="prop"><span class="l">Reactive groups</span><span class="v ${d.reactive_groups.length>0?'warn':''}">${d.reactive_groups.length===0?'None':d.reactive_groups.join(', ')}</span></div>
+      </div>
+    </div>
+
+    <div class="flag-card">
+      <h3>📋 Drug Master File (DMF) Flags</h3>
+      ${d.dmf_flags.map(f=>`<div class="flag-item"><span class="fi">${f.includes('No major')?'✅':'⚠'}</span><span>${f}</span></div>`).join('')}
+    </div>
+
+    ${d.genotox_alerts.length>0?`
+    <div class="flag-card" style="border-color:#e05050;background:#1a0505">
+      <h3 style="color:#e05050">🔴 ICH M7 Genotoxicity Alerts</h3>
+      ${d.genotox_alerts.map(a=>`<div class="flag-item"><span class="fi" style="color:#e05050">✗</span><span>${a} — requires Ames test, mouse lymphoma assay</span></div>`).join('')}
+    </div>`:''}
+  `;
+  document.getElementById('p_results').style.display='block';
+}
+
+// ── Impurity ──
+async function runImpurity(){
+  const smiles=document.getElementById('i_smiles').value.trim();
+  const name=document.getElementById('i_name').value.trim()||'API';
+  if(!smiles){alert('Enter SMILES');return;}
+  setLoading('i',true);
+  try{
+    const r=await fetch('/msn/impurity',{method:'POST',headers:authHeaders(),body:JSON.stringify({smiles,name})});
+    const d=await r.json();
+    setLoading('i',false);
+    if(d.error){showErr('i',d.error);return;}
+    renderImpurity(d);
+  }catch(e){setLoading('i',false);showErr('i',e.message);}
+}
+
+function renderImpurity(d){
+  const el=document.getElementById('i_results');
+  const col=d.ich_q3b_concern?'#e05050':'#059669';
+  el.innerHTML=`
+    <div class="hero" style="border-color:${col}">
+      <div style="flex:1">
+        <h2 style="color:#a78bfa;margin-bottom:6px">${d.parent_name} — Impurity Screening</h2>
+        <div style="font-size:0.88rem;color:${col};margin-bottom:4px">
+          ${d.ich_q3b_concern?'⚠ ICH M7 Genotoxic concern detected':'✓ No genotoxic impurities detected'}
+        </div>
+        <div style="font-size:0.82rem;color:#8899bb">${d.recommendation}</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>${d.total_flagged} Potential Impurities Identified</h2>
+      <table>
+        <tr><th>SMILES</th><th>MW</th><th>m/z [M+H]+</th><th>Genotox Alerts</th><th>Risk</th><th>ICH Threshold</th><th>Action</th></tr>
+        ${d.impurities.map(imp=>`
+          <tr>
+            <td style="font-family:monospace;font-size:0.72rem;max-width:160px;word-break:break-all">${imp.smiles}</td>
+            <td>${imp.mw}</td>
+            <td>${imp.mz_mh_plus}</td>
+            <td>${imp.genotox_alerts.length===0?'<span class="tag tg">None</span>':imp.genotox_alerts.map(a=>`<span class="tag tr">${a}</span>`).join('')}</td>
+            <td class="risk-${imp.risk_level.toLowerCase()}">${imp.risk_level}</td>
+            <td style="font-size:0.75rem">${imp.ich_threshold}</td>
+            <td style="font-size:0.75rem">${imp.action_required}</td>
+          </tr>`).join('')}
+      </table>
+    </div>
+  `;
+  document.getElementById('i_results').style.display='block';
+}
+
+// ── Polymorph ──
+let polyForms=[
+  {name:"Form A",smiles:"CN(C)C(=N)NC(=N)N",geometry:"C 0 0 0; N 1.35 0 0; N -0.7 1.2 0; N -0.7 -1.2 0; N 2.7 0 0"},
+  {name:"Form B",smiles:"CN(C)C(=N)NC(=N)N",geometry:"C 0 0 0.1; N 1.35 0 0.1; N -0.7 1.2 -0.1; N -0.7 -1.2 -0.1; N 2.7 0 0.1"}
+];
+
+function loadPolyDemo(){
+  document.getElementById('poly_name').value='Metformin HCl';
+}
+
+async function runPolymorph(){
+  const name=document.getElementById('poly_name').value.trim()||'API';
+  const useVqe=document.getElementById('poly_vqe').checked;
+  setLoading('poly',true);
+  document.getElementById('poly_lmsg').textContent=useVqe?'Running VQE on each polymorph...':'Computing MM energies...';
+  try{
+    const r=await fetch('/msn/polymorph',{method:'POST',headers:authHeaders(),body:JSON.stringify({name,forms:polyForms,use_vqe:useVqe})});
+    const d=await r.json();
+    setLoading('poly',false);
+    if(d.error){showErr('poly',d.error);return;}
+    renderPolymorph(d);
+  }catch(e){setLoading('poly',false);showErr('poly',e.message);}
+}
+
+function renderPolymorph(d){
+  const el=document.getElementById('poly_results');
+  const ranked=d.rankings.sort((a,b)=>(a.energy_ha||0)-(b.energy_ha||0));
+  el.innerHTML=`
+    <div class="hero">
+      <div style="flex:1">
+        <h2 style="color:#a78bfa;margin-bottom:6px">${d.api_name} — Polymorph Stability</h2>
+        <div style="font-size:0.9rem;color:#059669;margin-bottom:4px">Most stable: ${d.most_stable_form}</div>
+        <div style="font-size:0.82rem;color:#8899bb">ΔE = ${d.energy_difference_ev} eV between forms</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Energy Rankings (lower = more stable)</h2>
+      <table>
+        <tr><th>Rank</th><th>Form</th><th>Energy (Ha)</th><th>Energy (eV)</th><th>Method</th><th>Status</th></tr>
+        ${ranked.map((r,i)=>`
+          <tr>
+            <td>${i+1}</td>
+            <td style="font-weight:bold;color:${i===0?'#059669':'#e0e6f0'}">${r.form} ${i===0?'⭐':''}</td>
+            <td style="font-family:monospace">${r.energy_ha??'—'}</td>
+            <td style="font-family:monospace">${r.energy_ev??'—'}</td>
+            <td style="font-size:0.75rem">${r.method}</td>
+            <td>${i===0?'<span class="tag tg">MOST STABLE</span>':'<span class="tag ta">Less stable</span>'}</td>
+          </tr>`).join('')}
+      </table>
+    </div>
+    <div class="flag-card">
+      <h3>Manufacturing Recommendation</h3>
+      <div style="font-size:0.85rem;color:#e0e6f0;line-height:1.6">${d.manufacturing_recommendation}</div>
+      <div style="margin-top:10px;font-size:0.78rem;color:#8899bb">
+        Method: ${d.vqe_used?'⚛ Quantum VQE (IBM Quantum / AerSimulator)':'Classical MM force field'}
+      </div>
+    </div>
+  `;
+  document.getElementById('poly_results').style.display='block';
+}
+
+// ── Portfolio ──
+async function runPortfolio(){
+  setLoading('port',true);
+  try{
+    const r=await fetch('/msn/portfolio',{headers:authHeaders()});
+    const d=await r.json();
+    setLoading('port',false);
+    if(d.error){showErr('port',d.error);return;}
+    renderPortfolio(d);
+  }catch(e){setLoading('port',false);showErr('port',e.message);}
+}
+
+function renderPortfolio(d){
+  const el=document.getElementById('port_results');
+  const mols=d.portfolio;
+  el.innerHTML=`
+    <div class="card">
+      <h2>MSN Labs API Portfolio — ${d.count} Molecules Analysed</h2>
+      <table>
+        <tr>
+          <th>Rank</th><th>API</th><th>Category</th>
+          <th>API Score</th><th>MW</th><th>LogP</th>
+          <th>Solubility</th><th>Genotox</th><th>DMF Flags</th><th>Regulatory Path</th>
+        </tr>
+        ${mols.map((m,i)=>{
+          if(m.error) return `<tr><td>${i+1}</td><td>${m.name}</td><td colspan="8" style="color:#e05050">${m.error}</td></tr>`;
+          const p=m.profile;
+          const sc=p.api_score;
+          const col=sc>=0.8?'#059669':sc>=0.6?'#f0a500':'#e05050';
+          return `<tr>
+            <td>${i+1}</td>
+            <td style="font-weight:bold">${m.name}</td>
+            <td style="font-size:0.75rem;color:#8899bb">${m.category}</td>
+            <td style="color:${col};font-weight:bold">${sc.toFixed(3)}</td>
+            <td>${p.mw}</td>
+            <td>${p.logp}</td>
+            <td class="${p.aqueous_solubility==='HIGH'?'pass':p.aqueous_solubility==='VERY LOW'?'fail':'warn'}">${p.aqueous_solubility}</td>
+            <td>${p.genotox_alerts.length===0?'<span class="tag tg">Clean</span>':p.genotox_alerts.map(a=>`<span class="tag tr">${a}</span>`).join('')}</td>
+            <td style="font-size:0.72rem">${p.dmf_flags.length} flag(s)</td>
+            <td style="font-size:0.75rem">${p.regulatory_readiness.split('—')[0]}</td>
+          </tr>`;
+        }).join('')}
+      </table>
+    </div>
+  `;
+  document.getElementById('port_results').style.display='block';
+}
+
+function setLoading(id,on){
+  document.getElementById(id+'_loading').style.display=on?'block':'none';
+  document.getElementById(id+'_results').style.display=on?'none':document.getElementById(id+'_results').style.display;
+  document.getElementById(id+'_error').style.display='none';
+}
+function showErr(id,msg){
+  const e=document.getElementById(id+'_error');
+  e.textContent='Error: '+msg; e.style.display='block';
+}
+async function downloadReport(){
+  const smiles=document.getElementById('p_smiles').value.trim();
+  const name=document.getElementById('p_name').value.trim()||'API';
+  const cat=document.getElementById('p_cat').value.trim()||'Unknown';
+  if(!smiles){alert('Load a molecule first');return;}
+  const btn=document.getElementById('pdfBtn');
+  btn.textContent='Generating...'; btn.disabled=true;
+  try{
+    const r=await fetch('/msn/report',{
+      method:'POST',
+      headers:authHeaders(),
+      body:JSON.stringify({smiles,name,category:cat})
+    });
+    if(!r.ok){
+      const txt=await r.text();
+      try{const j=JSON.parse(txt);alert('Error: '+j.error);}
+      catch{alert('Server error — check Pi terminal');}
+      btn.textContent='⬇ PDF Report'; btn.disabled=false; return;
+    }
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=`QMolSim_${name}_Report.pdf`; a.click();
+  }catch(e){alert('Error: '+e.message);}
+  btn.textContent='⬇ PDF Report'; btn.disabled=false;
+}
+
+async function downloadAllReports(){
+  const btn=document.getElementById('allPdfBtn');
+  btn.textContent='Generating all PDFs...'; btn.disabled=true;
+  try{
+    const r=await fetch('/msn/report/portfolio',{headers:authHeaders()});
+    if(!r.ok){alert('Failed to generate portfolio reports');btn.textContent='⬇ All Portfolio PDFs';btn.disabled=false;return;}
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='QMolSim_MSN_Portfolio_Reports.zip'; a.click();
+  }catch(e){alert('Error: '+e.message);}
+  btn.textContent='⬇ All Portfolio PDFs'; btn.disabled=false;
+}
+async function loadStructure(smiles, profile){
+  try{
+    const encoded = encodeURIComponent(smiles);
+    const r = await fetch(`/msn/structure/${encoded}`,{headers:authHeaders()});
+    const d = await r.json();
+    if(d.image){
+      document.getElementById('structureImg').src = d.image;
+      document.getElementById('structureMeta').innerHTML = `
+        <div><b style="color:#a78bfa">Formula:</b> ${profile.formula||'—'}</div>
+        <div><b style="color:#a78bfa">MW:</b> ${profile.mw||'—'} Da</div>
+        <div><b style="color:#a78bfa">Heavy atoms:</b> ${profile.heavy_atoms||'—'}</div>
+        <div><b style="color:#a78bfa">Aromatic rings:</b> ${profile.aromatic_rings||'—'}</div>
+        <div><b style="color:#a78bfa">Chiral centers:</b> ${profile.chiral_centers||0}</div>
+        <div><b style="color:#a78bfa">Rotatable bonds:</b> ${profile.rotatable_bonds||'—'}</div>
+        <div style="margin-top:8px;font-size:0.75rem;color:#4a6a9a">
+          Structure generated by RDKit<br>
+          2D coordinates computed via ETKDG
+        </div>`;
+      document.getElementById('structureCard').style.display='block';
+    }
+  }catch(e){ console.log('Structure load failed:', e); }
+}
+
+// ── Batch Upload ──
+function downloadSampleCSV(){
+  const csv = `smiles,name,category
+CN(C)C(=N)NC(=N)N,Metformin,Antidiabetic
+CC(=O)Oc1ccccc1C(=O)O,Aspirin,Analgesic
+CC(=O)Nc1ccc(O)cc1,Paracetamol,Analgesic
+O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O,Ciprofloxacin,Antibiotic
+COc1ccc2[nH]c(S(=O)Cc3ncc(OC)c(OC)c3OC)nc2c1,Pantoprazole,PPI
+CN1C=NC2=C1C(=O)N(C(=O)N2C)C,Caffeine,Stimulant
+CC(C)Cc1ccc(cc1)C(C)C(=O)O,Ibuprofen,NSAID
+CCCCc1nc(Cl)c(CO)n1Cc1ccc(-c2ccccc2-c2nnn[nH]2)cc1,Losartan,Antihypertensive`;
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='sample_molecules.csv'; a.click();
+}
+
+async function runBatch(){
+  let csvContent = '';
+  const fileInput = document.getElementById('batchFile');
+  const textInput = document.getElementById('batchText').value.trim();
+
+  if(fileInput.files.length > 0){
+    csvContent = await fileInput.files[0].text();
+  } else if(textInput){
+    csvContent = textInput;
+  } else {
+    alert('Upload a CSV file or paste CSV content');
+    return;
+  }
+
+  setLoading('b', true);
+  const lines = csvContent.split('\n').filter(l=>l.trim()).length - 1;
+  document.getElementById('b_lmsg').textContent =
+    `Processing ${lines} molecules... this may take a moment`;
+
+  try{
+    const r = await fetch('/msn/batch',{
+      method:'POST',
+      headers:authHeaders(),
+      body: JSON.stringify({csv: csvContent})
+    });
+    const d = await r.json();
+    setLoading('b', false);
+    if(d.error){ showErr('b', d.error); return; }
+    renderBatchResults(d, csvContent);
+  }catch(e){
+    setLoading('b', false);
+    showErr('b', e.message);
+  }
+}
+
+function renderBatchResults(d, csvContent){
+  const s = d.summary;
+  const el = document.getElementById('b_results');
+  el.innerHTML = `
+    <div class="hero" style="margin-bottom:14px">
+      <div style="flex:1">
+        <h2 style="color:#a78bfa;margin-bottom:8px">
+          Batch Complete — ${s.success} molecules analysed in ${d.runtime_s}s
+        </h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px">
+          <div style="text-align:center">
+            <div style="font-size:1.4rem;font-weight:bold;color:#a78bfa">${s.avg_score}</div>
+            <div style="font-size:0.72rem;color:#8899bb">Avg Score</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.4rem;font-weight:bold;color:#059669">${s.reg_ready_count}</div>
+            <div style="font-size:0.72rem;color:#8899bb">Reg-Ready (≥0.80)</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.4rem;font-weight:bold;color:#e05050">${s.high_risk_count}</div>
+            <div style="font-size:0.72rem;color:#8899bb">High Risk</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.4rem;font-weight:bold;color:#f59e0b">${s.genotox_count}</div>
+            <div style="font-size:0.72rem;color:#8899bb">Genotox Alerts</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.4rem;font-weight:bold;color:#e05050">${s.bcs4_count}</div>
+            <div style="font-size:0.72rem;color:#8899bb">BCS Class IV</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-direction:column">
+        <button class="btn btn-green" onclick="downloadRankedCSV('${encodeURIComponent(csvContent)}')">
+          ⬇ Download Ranked CSV
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ranked Results — All ${d.count} Molecules</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <tr>
+            <th>Rank</th><th>Name</th><th>Category</th>
+            <th>Score</th><th>MW</th><th>Solubility</th>
+            <th>Genotox</th><th>Chiral</th><th>Complexity</th>
+            <th>Reg Path</th>
+          </tr>
+          ${d.results.map(r=>{
+            const col=r.api_score>=0.8?'#059669':r.api_score>=0.6?'#f59e0b':'#e05050';
+            return `<tr>
+              <td>${r.rank}</td>
+              <td style="font-weight:bold">${r.name}</td>
+              <td style="font-size:0.75rem;color:#8899bb">${r.category}</td>
+              <td style="color:${col};font-weight:bold">${r.api_score.toFixed(3)}</td>
+              <td>${r.mw}</td>
+              <td class="${r.aqueous_solubility==='HIGH'?'risk-LOW':r.aqueous_solubility==='VERY LOW'?'risk-HIGH':'risk-MODERATE'}">${r.aqueous_solubility}</td>
+              <td>${r.genotox_alerts?.length>0?'<span class="tag tr">'+r.genotox_alerts.length+' alert</span>':'<span class="tag tg">Clean</span>'}</td>
+              <td>${r.chiral_centers}</td>
+              <td style="font-size:0.75rem">${r.synthesis_complexity}</td>
+              <td style="font-size:0.72rem">${(r.regulatory_readiness||'').split('—')[0]}</td>
+            </tr>`;
+          }).join('')}
+        </table>
+      </div>
+    </div>
+
+    ${d.high_risk.length>0?`
+    <div class="card" style="border-left:3px solid #e05050">
+      <h2 style="color:#e05050">⚠ High Risk Molecules — Immediate Action Required</h2>
+      <table>
+        <tr><th>Name</th><th>Score</th><th>Genotox Alerts</th><th>Issue</th></tr>
+        ${d.high_risk.map(r=>`<tr>
+          <td>${r.name}</td>
+          <td style="color:#e05050">${r.api_score.toFixed(3)}</td>
+          <td>${r.genotox_alerts?.join(', ')||'None'}</td>
+          <td style="font-size:0.75rem">${r.mutagenicity_risk==='HIGH'?'Mutagenicity risk':r.aqueous_solubility==='VERY LOW'?'BCS Class IV':'Stability concern'}</td>
+        </tr>`).join('')}
+      </table>
+    </div>`:''}
+  `;
+  document.getElementById('b_results').style.display='block';
+}
+
+async function downloadRankedCSV(encodedCsv){
+  const csvContent = decodeURIComponent(encodedCsv);
+  const r = await fetch('/msn/batch/download',{
+    method:'POST',
+    headers:authHeaders(),
+    body: JSON.stringify({csv: csvContent})
+  });
+  const blob = await r.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='QMolSim_Ranked_Results.csv'; a.click();
+}
+
+async function loadManufacturing(smiles, profile){
+  try{
+    const r = await fetch('/msn/manufacturing',{
+      method:'POST',
+      headers:authHeaders(),
+      body: JSON.stringify({smiles, name:profile.name, profile})
+    });
+    const d = await r.json();
+    if(d.error) return;
+
+    const col = d.score_color||'#a78bfa';
+    const el  = document.getElementById('mfgScoreNum');
+    el.textContent  = d.total_score;
+    el.style.color  = col;
+    el.style.borderColor = col;
+
+    document.getElementById('mfgBand').textContent    = d.complexity_band;
+    document.getElementById('mfgBand').style.color    = col;
+    document.getElementById('mfgCogs').textContent    = '💰 COGS: ' + d.estimated_cogs_index;
+    document.getElementById('mfgTimeline').textContent= '⏱ Timeline: ' + d.estimated_timeline;
+
+    document.getElementById('mfgDrivers').innerHTML =
+      '<div style="font-size:0.75rem;color:#4a6a9a;margin-bottom:4px">Top complexity drivers:</div>' +
+      (d.top_drivers||[]).map(t=>
+        `<span class="tag tv" style="margin:2px">${t}</span>`).join('') ||
+      '<span style="color:#059669;font-size:0.82rem">No major complexity drivers</span>';
+
+    document.getElementById('mfgRecs').innerHTML =
+      '<div style="font-size:0.75rem;color:#4a6a9a;margin-bottom:6px">Recommendations:</div>' +
+      (d.recommendations||[]).map(r=>
+        `<div style="font-size:0.78rem;color:#c0d0e0;padding:4px 0;
+                     border-bottom:1px solid #1a2535">▸ ${r}</div>`
+      ).join('');
+
+    document.getElementById('mfgBreakdown').innerHTML =
+      '<div style="font-size:0.75rem;color:#4a6a9a;margin-bottom:8px">Score breakdown:</div>' +
+      (d.breakdown||[]).map(b=>{
+        const pct = (b.score/b.max*100);
+        const bc  = b.score>=7?'#e05050':b.score>=4?'#f59e0b':'#059669';
+        return `<div style="margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px">
+            <span style="color:#8899bb">${b.factor}</span>
+            <span style="color:${bc};font-weight:bold">${b.score}/${b.max}</span>
+          </div>
+          <div style="background:#1a2535;border-radius:3px;height:5px">
+            <div style="width:${pct}%;background:${bc};height:5px;border-radius:3px"></div>
+          </div>
+        </div>`;
+      }).join('');
+
+    document.getElementById('mfgCard').style.display='block';
+  }catch(e){ console.log('Mfg score failed:', e); }
+}
+
+// ── Roadmap ──
+async function runRoadmap(){
+  const smiles = document.getElementById('rm_smiles').value.trim();
+  const name   = document.getElementById('rm_name').value.trim() || 'API';
+  if(!smiles){ alert('Enter SMILES'); return; }
+  setLoading('rm', true);
+  try{
+    const r = await fetch('/msn/roadmap',{
+      method:'POST',
+      headers:authHeaders(),
+      body: JSON.stringify({smiles, name})
+    });
+    const d = await r.json();
+    setLoading('rm', false);
+    if(d.error){ showErr('rm', d.error); return; }
+    renderRoadmap(d);
+  }catch(e){ setLoading('rm',false); showErr('rm',e.message); }
+}
+
+function renderRoadmap(d){
+  const phaseColors = {
+    'Phase 1':'#4a9eff',
+    'Phase 2':'#7c3aed',
+    'Phase 3':'#e05050',
+    'Phase 4':'#059669',
+    'Phase 5':'#f59e0b',
+  };
+  const prioColors = {
+    'URGENT':'#e05050','CRITICAL':'#f59e0b','HIGH':'#4a9eff','MODERATE':'#059669'
+  };
+
+  const el = document.getElementById('rm_results');
+  el.innerHTML = `
+    <!-- Summary hero -->
+    <div class="hero" style="margin-bottom:14px">
+      <div style="flex:1">
+        <h2 style="color:#a78bfa;margin-bottom:8px">${d.api_name} — CMC Development Roadmap</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:8px">
+          <div><div style="font-size:1.3rem;font-weight:bold;color:#a78bfa">${d.total_studies}</div><div style="font-size:0.72rem;color:#8899bb">Total Studies</div></div>
+          <div><div style="font-size:1.3rem;font-weight:bold;color:#4a9eff">${d.estimated_total_duration}</div><div style="font-size:0.72rem;color:#8899bb">Total Timeline</div></div>
+          <div><div style="font-size:1.3rem;font-weight:bold;color:#059669">${d.estimated_total_cost_inr}</div><div style="font-size:0.72rem;color:#8899bb">Estimated Investment</div></div>
+        </div>
+        <div style="margin-top:10px;font-size:0.82rem;padding:8px 12px;border-radius:6px;
+          background:${d.risk_summary.startsWith('HIGH')?'#2a0d0d':d.risk_summary.startsWith('MODERATE')?'#2a1a0d':'#0d2a1a'};
+          color:${d.risk_summary.startsWith('HIGH')?'#e05050':d.risk_summary.startsWith('MODERATE')?'#f59e0b':'#059669'}">
+          ${d.risk_summary}
+        </div>
+      </div>
+    </div>
+
+    <!-- Go/No-Go Gates -->
+    <div class="card" style="margin-bottom:14px">
+      <h2>Go / No-Go Decision Gates</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:8px">
+        ${(d.go_no_go_gates||[]).map((g,i)=>`
+          <div style="background:#1a1040;border:1px solid #7c3aed;border-radius:8px;padding:12px">
+            <div style="font-size:0.7rem;color:#7c3aed;font-weight:bold;text-transform:uppercase;margin-bottom:4px">${g.gate}</div>
+            <div style="font-size:0.75rem;color:#4a9eff;margin-bottom:4px">⏱ ${g.timing}</div>
+            <div style="font-size:0.75rem;color:#8899bb;margin-bottom:6px">${g.criteria}</div>
+            <div style="font-size:0.75rem;color:#059669">→ ${g.decision}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Phases -->
+    ${Object.entries(d.phases||{}).map(([phase, studies])=>{
+      const col = Object.entries(phaseColors).find(([k])=>phase.startsWith(k))?.[1] || '#7c3aed';
+      return `
+        <div class="card" style="margin-bottom:14px;border-left:3px solid ${col}">
+          <h2 style="color:${col}">${phase}</h2>
+          <div style="overflow-x:auto;margin-top:10px">
+            <table>
+              <tr>
+                <th>Study</th><th>Regulatory Basis</th>
+                <th>Priority</th><th>Duration</th>
+                <th>Cost (INR)</th><th>Rationale</th>
+              </tr>
+              ${studies.map(s=>{
+                const pc = prioColors[s.priority]||'#8899bb';
+                return `<tr>
+                  <td style="font-weight:bold;min-width:200px">${s.study}</td>
+                  <td style="font-size:0.72rem;color:#8899bb;min-width:120px">${s.regulatory_basis}</td>
+                  <td><span style="color:${pc};font-weight:bold;font-size:0.78rem">${s.priority}</span></td>
+                  <td style="font-size:0.78rem;min-width:100px">${s.estimated_duration}</td>
+                  <td style="font-size:0.78rem;color:#059669;min-width:100px">${s.estimated_cost_inr}</td>
+                  <td style="font-size:0.72rem;color:#8899bb;min-width:200px">${s.rationale}</td>
+                </tr>`;
+              }).join('')}
+            </table>
+          </div>
+        </div>`;
+    }).join('')}
+
+    <!-- Critical path -->
+    <div class="card">
+      <h2>Critical Path — Must Complete Before DMF Submission</h2>
+      <div style="margin-top:8px">
+        ${(d.critical_path_items||[]).map((item,i)=>`
+          <div style="display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #1a2535;font-size:0.82rem">
+            <span style="color:#f59e0b;font-weight:bold;min-width:20px">${i+1}.</span>
+            <span>${item}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('rm_results').style.display='block';
+}
+
+// ── AI Copilot ──
+let copilotHistory = [];
+let copilotProfile = null;
+function getAuthToken(){
+  const t = localStorage.getItem("auth_token") || "";
+  return t;
+}
+
+function authHeaders(){
+  return {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + getAuthToken()
+  };
+}
+
+// Redirect to login if not authenticated
+if(!getAuthToken() && !window.location.pathname.includes('login')){
+  window.location.href = '/login';
+}
+
+
+async function loadCopilotContext(){
+  const smiles = document.getElementById('cp_smiles').value.trim();
+  const name   = document.getElementById('cp_name').value.trim() || 'API';
+  if(!smiles){ alert('Enter SMILES for context'); return; }
+  try{
+    const r = await fetch('/msn/profile',{
+      method:'POST',
+      headers:authHeaders(),
+      body: JSON.stringify({smiles, name, category:'Unknown'})
+    });
+    copilotProfile = await r.json();
+    document.getElementById('cp_context').style.display='block';
+    document.getElementById('cp_context').innerHTML =
+      `<b style="color:#a78bfa">Context loaded:</b> ${copilotProfile.name} | `+
+      `MW: ${copilotProfile.mw} Da | LogP: ${copilotProfile.logp} | `+
+      `Solubility: ${copilotProfile.aqueous_solubility} | `+
+      `Genotox: ${copilotProfile.genotox_alerts?.length>0?copilotProfile.genotox_alerts.join(', '):'None'} | `+
+      `Score: ${copilotProfile.api_score}`;
+    addChatMsg('assistant', `Context loaded for **${name}**. I now have full molecular profile data. Ask me anything about this API's regulatory pathway, stability requirements, impurity strategy, or manufacturing considerations.`);
+  }catch(e){ alert('Failed to load context: '+e.message); }
+}
+
+function addChatMsg(role, text){
+  const chat = document.getElementById('cp_chat');
+  const isFirst = chat.querySelector('.color\\:\\#4a6a9a');
+  if(isFirst) isFirst.parentElement?.remove?.() || (chat.innerHTML = '');
+
+  const div = document.createElement('div');
+  div.style.cssText = `margin-bottom:12px;padding:10px 14px;border-radius:8px;${
+    role==='user'
+      ? 'background:#1a2040;border-left:3px solid #4a9eff;margin-left:20px'
+      : 'background:#1a1a2e;border-left:3px solid #7c3aed;margin-right:20px'
+  }`;
+
+  // Simple markdown: **bold**, bullet points
+  const formatted = text
+    .replace(/\*\*(.*?)\*\*/g, '<b style="color:#a78bfa">$1</b>')
+    .replace(/^• /gm, '&nbsp;&nbsp;• ')
+    .replace(/\n/g, '<br>');
+
+  div.innerHTML = `
+    <div style="font-size:0.7rem;color:${role==='user'?'#4a9eff':'#7c3aed'};margin-bottom:4px;font-weight:bold">
+      ${role==='user'?'You':'⚗ Regulatory Copilot'}
+    </div>
+    <div>${formatted}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendCopilot(){
+  const input = document.getElementById('cp_input');
+  const msg   = input.value.trim();
+  if(!msg) return;
+  input.value = '';
+
+  addChatMsg('user', msg);
+  copilotHistory.push({role:'user', content:msg});
+
+  // Typing indicator
+  const chat = document.getElementById('cp_chat');
+  const typing = document.createElement('div');
+  typing.id = 'typing';
+  typing.style.cssText = 'padding:10px 14px;color:#4a6a9a;font-size:0.82rem;font-style:italic';
+  typing.textContent = '⚗ Copilot is thinking...';
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
+
+  try{
+    const r = await fetch('/msn/copilot',{
+      method:'POST',
+      headers:authHeaders(),
+      body: JSON.stringify({
+        message: msg,
+        history: copilotHistory.slice(-8),
+        molecule_profile: copilotProfile,
+      })
+    });
+    const d = await r.json();
+    document.getElementById('typing')?.remove();
+
+    const response = d.response || d.error || 'No response';
+    copilotHistory.push({role:'assistant', content:response});
+    addChatMsg('assistant', response);
+  }catch(e){
+    document.getElementById('typing')?.remove();
+    addChatMsg('assistant', 'Error: '+e.message);
+  }
+}
+
+function quickAsk(q){
+  document.getElementById('cp_input').value = q;
+  sendCopilot();
+}
+
+function clearChat(){
+  copilotHistory = [];
+  document.getElementById('cp_chat').innerHTML =
+    '<div style="color:#4a6a9a;text-align:center;padding:40px 0">Chat cleared. Ask a new question.</div>';
+}
+
+// ── Benchmarking ──
+async function runBenchmark(){
+  const smiles = document.getElementById('bm_smiles').value.trim();
+  const name   = document.getElementById('bm_name').value.trim() || 'API';
+  if(!smiles){ alert('Enter SMILES'); return; }
+  setLoading('bm', true);
+  try{
+    const r = await fetch('/msn/benchmark',{
+      method:'POST',
+      headers:authHeaders(),
+      body: JSON.stringify({smiles, name})
+    });
+    const d = await r.json();
+    setLoading('bm', false);
+    if(d.error){ showErr('bm', d.error); return; }
+    renderBenchmark(d);
+  }catch(e){ setLoading('bm',false); showErr('bm',e.message); }
+}
+
+function renderBenchmark(d){
+  const el = document.getElementById('bm_results');
+  const pcts = d.percentiles||{};
+  const entries = Object.entries(pcts);
+
+  el.innerHTML = `
+    <div class="hero" style="margin-bottom:14px">
+      <div style="text-align:center;flex-shrink:0;min-width:120px">
+        <div style="font-size:2.5rem;font-weight:bold;color:#a78bfa">${d.better_than_pct}%</div>
+        <div style="font-size:0.72rem;color:#8899bb">Better than industry</div>
+      </div>
+      <div style="flex:1">
+        <h2 style="color:#a78bfa;margin-bottom:6px">${d.api_name} — Industry Benchmark</h2>
+        <div style="font-size:0.85rem;color:#e0e6f0;margin-bottom:6px">${d.industry_position}</div>
+        <div style="font-size:0.82rem;color:#8899bb">${d.competitive_summary}</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          ${(d.strengths||[]).map(s=>`<span class="tag tg">✓ ${s}</span>`).join('')}
+          ${(d.weaknesses||[]).map(w=>`<span class="tag tr">▲ ${w}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-bottom:14px">
+      <div class="chart-card">
+        <h3>Percentile Rankings vs Industry</h3>
+        <canvas id="benchRadar"></canvas>
+      </div>
+      <div class="card">
+        <h2>Dimension Rankings</h2>
+        ${entries.map(([dim, pct])=>{
+          const col = pct>=65?'#059669':pct>=40?'#4a9eff':'#e05050';
+          return `<div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:3px">
+              <span style="color:#8899bb">${dim}</span>
+              <span style="color:${col};font-weight:bold">${pct}th percentile</span>
+            </div>
+            <div style="background:#1a2535;border-radius:4px;height:8px">
+              <div style="width:${pct}%;background:${col};height:8px;border-radius:4px;transition:width 0.5s"></div>
+            </div>
+            <div style="font-size:0.7rem;color:${col};margin-top:2px">${d.rankings[dim]||''}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Most Comparable Industry APIs</h2>
+      <table>
+        <tr><th>API</th><th>API Score</th><th>MW</th><th>Solubility</th><th>Chiral</th><th>Mfg Score</th></tr>
+        ${(d.comparable_apis||[]).map(r=>`<tr>
+          <td style="font-weight:bold">${r.name}</td>
+          <td style="color:#a78bfa">${r.api_score.toFixed(2)}</td>
+          <td>${r.mw}</td>
+          <td class="${r.solubility==='HIGH'?'risk-LOW':r.solubility==='VERY LOW'?'risk-HIGH':'risk-MODERATE'}">${r.solubility}</td>
+          <td>${r.chiral}</td>
+          <td>${r.mfg_score}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+  `;
+
+  // Radar chart
+  setTimeout(()=>{
+    const ctx = document.getElementById('benchRadar');
+    if(!ctx) return;
+    new Chart(ctx,{
+      type:'radar',
+      data:{
+        labels: Object.keys(pcts),
+        datasets:[{
+          label: d.api_name,
+          data: Object.values(pcts),
+          backgroundColor:'rgba(124,58,237,0.15)',
+          borderColor:'#7c3aed',
+          pointBackgroundColor:'#7c3aed',
+          borderWidth:2,
+        },{
+          label:'Industry Average',
+          data: Object.keys(pcts).map(()=>50),
+          backgroundColor:'rgba(74,154,255,0.05)',
+          borderColor:'#4a9eff',
+          borderDash:[5,5],
+          borderWidth:1,
+          pointRadius:0,
+        }]
+      },
+      options:{
+        scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'#1e2d4a'},pointLabels:{color:'#8899bb',font:{size:10}}}},
+        plugins:{legend:{labels:{color:'#8899bb',font:{size:10}}}}
+      }
+    });
+  }, 100);
+
+  document.getElementById('bm_results').style.display='block';
+}
+
+</script>
+</body>
+</html>

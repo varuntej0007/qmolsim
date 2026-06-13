@@ -1,0 +1,15 @@
+claude_pi/
+__pycache__/
+*.pyc
+*.pyo
+reports/*.pdf
+reports/*.zip
+data/qmolsim.db
+msn/data/ml_models.json
+phase2/data/model.json
+*.egg-info/
+.env
+msn/templates/msn.html.bak
+msn/templates/msn.html.pre_auth_fix
+*.pdf
+*.zip

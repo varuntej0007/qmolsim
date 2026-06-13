@@ -1,0 +1,17 @@
+{
+  "molecule_name": "Hydrogen",
+  "smiles": "[H][H]",
+  "ground_state_energy_hartree": NaN,
+  "ground_state_energy_ev": NaN,
+  "num_qubits": 0,
+  "num_parameters": 0,
+  "num_iterations": 0,
+  "convergence_history": [],
+  "runtime_seconds": 0.21176862716674805,
+  "optimizer_used": "SLSQP",
+  "ansatz_type": "uccsd",
+  "basis_set": "sto-3g",
+  "eigenvalue": NaN,
+  "success": false,
+  "error_message": "'The primitive job to evaluate the energy failed!'"
+}

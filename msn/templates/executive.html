@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QMolSim — Executive Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0a0e1a;color:#e0e6f0;min-height:100vh}
+header{background:linear-gradient(135deg,#1a0a2e,#0d1b3e);padding:16px 32px;border-bottom:2px solid #7c3aed;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+header h1{font-size:1.3rem;color:#a78bfa;letter-spacing:1px}
+header p{font-size:0.75rem;color:#8899bb;margin-top:2px}
+.badge{background:#7c3aed;color:#fff;font-size:0.62rem;font-weight:bold;padding:2px 7px;border-radius:4px;margin-left:6px}
+.live{background:#059669;color:#fff;font-size:0.62rem;padding:2px 7px;border-radius:4px;margin-left:4px}
+.nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.nav a{color:#8899bb;text-decoration:none;font-size:0.8rem;padding:6px 14px;border:1px solid #2a3a5a;border-radius:6px;transition:all 0.2s}
+.nav a:hover{color:#a78bfa;border-color:#7c3aed}
+.container{max-width:1300px;margin:0 auto;padding:24px 20px}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.kpi{background:#111827;border:1px solid #1e2d4a;border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-blue::before{background:#4a9eff}
+.kpi-green::before{background:#059669}
+.kpi-amber::before{background:#f59e0b}
+.kpi-red::before{background:#e05050}
+.kpi-purple::before{background:#7c3aed}
+.kpi h3{font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:#4a6a9a;margin-bottom:10px}
+.kpi .num{font-size:2rem;font-weight:bold;line-height:1}
+.kpi .sub{font-size:0.75rem;color:#8899bb;margin-top:4px}
+.kpi-blue .num{color:#4a9eff}
+.kpi-green .num{color:#059669}
+.kpi-amber .num{color:#f59e0b}
+.kpi-red .num{color:#e05050}
+.kpi-purple .num{color:#a78bfa}
+
+/* Charts grid */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-bottom:24px}
+.chart-card{background:#111827;border:1px solid #1e2d4a;border-radius:12px;padding:20px}
+.chart-card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#4a6a9a;margin-bottom:16px}
+canvas{max-height:240px}
+
+/* Portfolio table */
+.table-card{background:#111827;border:1px solid #1e2d4a;border-radius:12px;padding:20px;margin-bottom:24px}
+.table-card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#4a6a9a;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filter-btn{background:#1a2535;border:1px solid #2a3a5a;color:#8899bb;padding:5px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;transition:all 0.2s}
+.filter-btn:hover,.filter-btn.active{border-color:#7c3aed;color:#a78bfa;background:#1a1040}
+table{width:100%;border-collapse:collapse;font-size:0.82rem}
+th{text-align:left;padding:8px 10px;color:#4a6a9a;border-bottom:2px solid #1e2d4a;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.5px}
+td{padding:8px 10px;border-bottom:1px solid #1a2535}
+tr:hover td{background:#1a2535}
+.score-bar{display:flex;align-items:center;gap:8px}
+.bar-bg{flex:1;background:#1a2535;border-radius:4px;height:6px;max-width:80px}
+.bar-fill{height:6px;border-radius:4px}
+.risk-HIGH{color:#e05050;font-weight:bold}
+.risk-MODERATE{color:#f59e0b}
+.risk-LOW{color:#059669}
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:0.7rem}
+.tg{background:#0d3a2a;color:#059669}
+.tr{background:#3a0d0d;color:#e05050}
+.ta{background:#3a2a0d;color:#f59e0b}
+.tv{background:#1a0d3a;color:#a78bfa}
+
+/* Business impact */
+.impact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:24px}
+.impact-card{background:#111827;border-left:3px solid #7c3aed;border-radius:0 10px 10px 0;padding:16px}
+.impact-card.high{border-left-color:#e05050}
+.impact-card.moderate{border-left-color:#f59e0b}
+.impact-card.low{border-left-color:#059669}
+.impact-card h4{font-size:0.78rem;font-weight:bold;margin-bottom:4px}
+.impact-card.high h4{color:#e05050}
+.impact-card.moderate h4{color:#f59e0b}
+.impact-card.low h4{color:#059669}
+.impact-card p{font-size:0.78rem;color:#8899bb;line-height:1.5}
+
+/* Loading */
+.loading{text-align:center;padding:60px;color:#a78bfa}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid #1a1040;border-top:3px solid #7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Download bar */
+.dl-bar{background:#1a1040;border:1px solid #7c3aed;border-radius:10px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dl-bar span{font-size:0.82rem;color:#a78bfa;flex:1}
+.btn{background:#7c3aed;color:#fff;border:none;padding:9px 20px;border-radius:7px;font-weight:bold;cursor:pointer;font-size:0.82rem;transition:background 0.2s}
+.btn:hover{background:#6d28d9}
+.btn-green{background:#059669}
+.btn-green:hover{background:#047857}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>⚗ QMolSim <span class="badge">Executive Dashboard</span><span class="live">● Live</span></h1>
+    <p>MSN Laboratories — API Portfolio Intelligence &amp; Regulatory Readiness</p>
+  </div>
+  <div class="nav">
+    <a href="/msn">API Profiler</a>
+    <a href="/executive">Dashboard</a>
+    <span style="font-size:0.72rem;color:#4a6a9a" id="lastUpdate"></span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="loading" id="loadingState">
+    <div class="spinner"></div>
+    <div>Loading portfolio intelligence...</div>
+  </div>
+
+  <div id="mainContent" style="display:none">
+
+    <!-- Download bar -->
+    <div class="dl-bar">
+      <span>📊 Full portfolio analysis ready — <span id="totalMols">0</span> APIs analysed</span>
+      <button class="btn btn-green" onclick="downloadAllPDFs()">⬇ Download All PDF Reports</button>
+      <button class="btn" onclick="location.href='/msn'">Open API Profiler →</button>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Risk Distribution</h3>
+        <canvas id="riskPie"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>API Score by Molecule</h3>
+        <canvas id="scoreBar"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Regulatory Readiness</h3>
+        <canvas id="regPie"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Solubility vs LogP</h3>
+        <canvas id="solScatter"></canvas>
+      </div>
+    </div>
+
+    <!-- Business Impact -->
+    <div class="table-card">
+      <h3>Business Impact Summary</h3>
+      <div class="impact-grid" id="impactGrid"></div>
+    </div>
+
+    <!-- Portfolio table -->
+    <div class="table-card">
+      <h3>
+        Portfolio Command Center
+        <span style="font-size:0.72rem;color:#8899bb;font-weight:normal">Click any row for full report</span>
+      </h3>
+      <div class="filters">
+        <span style="font-size:0.75rem;color:#4a6a9a;margin-right:4px">Filter:</span>
+        <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
+        <button class="filter-btn" onclick="filterTable('HIGH',this)">High Risk</button>
+        <button class="filter-btn" onclick="filterTable('MODERATE',this)">Moderate</button>
+        <button class="filter-btn" onclick="filterTable('LOW',this)">Low Risk</button>
+        <button class="filter-btn" onclick="filterTable('genotox',this)">Genotox Alerts</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th><th>API</th><th>Category</th>
+            <th>Score</th><th>MW</th><th>Solubility</th>
+            <th>Stability</th><th>Genotox</th><th>DMF Flags</th>
+            <th>Regulatory Path</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="portfolioTable"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let portfolioData = [];
+let riskPieObj=null, scoreBarObj=null, regPieObj=null, solScatterObj=null;
+
+const COLORS = ['#059669','#f59e0b','#e05050','#4a9eff','#a78bfa','#ec4899','#06b6d4','#84cc16'];
+
+async function loadDashboard(){
+  try{
+    const r = await fetch('/msn/portfolio');
+    const d = await r.json();
+    portfolioData = d.portfolio;
+    document.getElementById('loadingState').style.display='none';
+    document.getElementById('mainContent').style.display='block';
+    document.getElementById('totalMols').textContent = d.count;
+    document.getElementById('lastUpdate').textContent =
+      'Updated: ' + new Date().toLocaleTimeString();
+    renderKPIs();
+    renderCharts();
+    renderImpacts();
+    renderTable(portfolioData);
+  }catch(e){
+    document.getElementById('loadingState').innerHTML =
+      '<div style="color:#e05050">Failed to load portfolio: '+e.message+'</div>';
+  }
+}
+
+function renderKPIs(){
+  const mols   = portfolioData.map(m=>m.profile).filter(Boolean);
+  const total  = mols.length;
+  const avgScore = (mols.reduce((s,m)=>s+(m.api_score||0),0)/total).toFixed(3);
+  const highRisk = mols.filter(m=>
+    m.genotox_alerts?.length>0 ||
+    m.mutagenicity_risk==='HIGH' ||
+    m.aqueous_solubility==='VERY LOW'
+  ).length;
+  const modRisk  = mols.filter(m=>
+    m.hydrolysis_risk==='HIGH' || m.oxidation_risk==='HIGH' || m.chiral_centers>0
+  ).length;
+  const lowRisk  = total - highRisk - modRisk;
+  const genotox  = mols.filter(m=>m.genotox_alerts?.length>0).length;
+  const readyNow = mols.filter(m=>m.api_score>=0.8).length;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi kpi-purple">
+      <h3>Portfolio Score</h3>
+      <div class="num">${avgScore}</div>
+      <div class="sub">Average API quality</div>
+    </div>
+    <div class="kpi kpi-green">
+      <h3>Low Risk</h3>
+      <div class="num">${lowRisk}</div>
+      <div class="sub">of ${total} APIs</div>
+    </div>
+    <div class="kpi kpi-amber">
+      <h3>Moderate Risk</h3>
+      <div class="num">${modRisk}</div>
+      <div class="sub">require attention</div>
+    </div>
+    <div class="kpi kpi-red">
+      <h3>High Risk</h3>
+      <div class="num">${highRisk}</div>
+      <div class="sub">immediate action</div>
+    </div>
+    <div class="kpi kpi-blue">
+      <h3>Genotox Alerts</h3>
+      <div class="num">${genotox}</div>
+      <div class="sub">ICH M7 review needed</div>
+    </div>
+    <div class="kpi kpi-green">
+      <h3>Reg-Ready APIs</h3>
+      <div class="num">${readyNow}</div>
+      <div class="sub">score ≥ 0.80</div>
+    </div>
+  `;
+}
+
+function renderCharts(){
+  const mols = portfolioData.map(m=>m.profile).filter(Boolean);
+
+  // Risk pie
+  const highR = mols.filter(m=>m.genotox_alerts?.length>0||m.mutagenicity_risk==='HIGH'||m.aqueous_solubility==='VERY LOW').length;
+  const modR  = mols.filter(m=>m.hydrolysis_risk==='HIGH'||m.oxidation_risk==='HIGH'||m.chiral_centers>0).length;
+  const lowR  = mols.length - highR - modR;
+
+  if(riskPieObj) riskPieObj.destroy();
+  riskPieObj = new Chart(document.getElementById('riskPie'),{
+    type:'doughnut',
+    data:{
+      labels:['Low Risk','Moderate Risk','High Risk'],
+      datasets:[{data:[lowR,modR,highR],backgroundColor:['#059669','#f59e0b','#e05050'],borderWidth:0}]
+    },
+    options:{plugins:{legend:{labels:{color:'#8899bb',font:{size:11}}}},cutout:'65%'}
+  });
+
+  // Score bar
+  const names  = portfolioData.map(m=>m.name);
+  const scores = portfolioData.map(m=>m.profile?.api_score||0);
+  if(scoreBarObj) scoreBarObj.destroy();
+  scoreBarObj = new Chart(document.getElementById('scoreBar'),{
+    type:'bar',
+    data:{
+      labels:names,
+      datasets:[{
+        data:scores,
+        backgroundColor:scores.map(s=>s>=0.8?'#059669':s>=0.6?'#f59e0b':'#e05050'),
+        borderRadius:4
+      }]
+    },
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{min:0,max:1,grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}},
+        x:{grid:{color:'#1e2d4a'},ticks:{color:'#8899bb',font:{size:9}}}
+      }
+    }
+  });
+
+  // Regulatory readiness pie
+  const reg = {HIGH:0,MODERATE:0,COMPLEX:0,CHALLENGING:0};
+  mols.forEach(m=>{
+    const r = m.regulatory_readiness||'';
+    if(r.includes('HIGH')) reg.HIGH++;
+    else if(r.includes('MODERATE')) reg.MODERATE++;
+    else if(r.includes('COMPLEX')) reg.COMPLEX++;
+    else reg.CHALLENGING++;
+  });
+  if(regPieObj) regPieObj.destroy();
+  regPieObj = new Chart(document.getElementById('regPie'),{
+    type:'pie',
+    data:{
+      labels:['Straightforward','Standard','Complex','Challenging'],
+      datasets:[{data:Object.values(reg),backgroundColor:['#059669','#4a9eff','#f59e0b','#e05050'],borderWidth:0}]
+    },
+    options:{plugins:{legend:{labels:{color:'#8899bb',font:{size:10}}}}}
+  });
+
+  // Solubility scatter
+  if(solScatterObj) solScatterObj.destroy();
+  solScatterObj = new Chart(document.getElementById('solScatter'),{
+    type:'scatter',
+    data:{
+      datasets:[{
+        data:mols.map((m,i)=>({
+          x:m.logp||0,
+          y:m.tpsa||0,
+          label:portfolioData[i]?.name||'',
+        })),
+        backgroundColor:mols.map(m=>
+          m.aqueous_solubility==='HIGH'?'#059669':
+          m.aqueous_solubility==='MODERATE'?'#4a9eff':
+          m.aqueous_solubility==='LOW'?'#f59e0b':'#e05050'
+        ),
+        pointRadius:9, pointHoverRadius:12,
+      }]
+    },
+    options:{
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.raw.label}: LogP=${c.raw.x.toFixed(2)}, TPSA=${c.raw.y.toFixed(1)}`}}
+      },
+      scales:{
+        x:{title:{display:true,text:'LogP',color:'#8899bb'},grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}},
+        y:{title:{display:true,text:'TPSA (Å²)',color:'#8899bb'},grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}}
+      }
+    }
+  });
+}
+
+function renderImpacts(){
+  const high=[], mod=[], low=[];
+  portfolioData.forEach(m=>{
+    const p=m.profile;
+    if(!p) return;
+    if(p.genotox_alerts?.length>0)
+      high.push({api:m.name,issue:'ICH M7 Genotoxic Alert',detail:`${p.genotox_alerts.join(', ')} — Ames test required before submission`});
+    if(p.aqueous_solubility==='VERY LOW')
+      high.push({api:m.name,issue:'BCS Class IV — Bioavailability Risk',detail:'Poor solubility and permeability. Additional formulation work required. Estimated impact: 6-12 months + ₹2-5Cr'});
+    if(p.hydrolysis_risk==='HIGH')
+      mod.push({api:m.name,issue:'Hydrolysis Risk',detail:'Forced degradation study and packaging optimisation required per ICH Q1A'});
+    if(p.oxidation_risk==='HIGH')
+      mod.push({api:m.name,issue:'Oxidation Sensitivity',detail:'Antioxidant packaging or nitrogen purge during manufacturing likely required'});
+    if(p.chiral_centers>0)
+      mod.push({api:m.name,issue:`${p.chiral_centers} Chiral Center(s)`,detail:'Enantioselective synthesis required. Chiral HPLC method development needed'});
+    if(p.api_score>=0.8)
+      low.push({api:m.name,issue:'Regulatory Ready',detail:`API score ${p.api_score.toFixed(3)} — straightforward CMC submission expected`});
+  });
+
+  const all=[
+    ...high.map(h=>({...h,level:'high'})),
+    ...mod.map(m=>({...m,level:'moderate'})),
+    ...low.slice(0,2).map(l=>({...l,level:'low'})),
+  ].slice(0,8);
+
+  document.getElementById('impactGrid').innerHTML = all.map(i=>`
+    <div class="impact-card ${i.level}">
+      <h4>${i.level==='high'?'⚠ ':i.level==='moderate'?'▲ ':'✓ '}${i.api} — ${i.issue}</h4>
+      <p>${i.detail}</p>
+    </div>`).join('');
+}
+
+function renderTable(data){
+  const tbody = document.getElementById('portfolioTable');
+  tbody.innerHTML = data.map((m,i)=>{
+    const p = m.profile||{};
+    if(m.error) return `<tr><td>${i+1}</td><td>${m.name}</td><td colspan="9" style="color:#e05050">${m.error}</td></tr>`;
+    const sc  = p.api_score||0;
+    const col = sc>=0.8?'#059669':sc>=0.6?'#f59e0b':'#e05050';
+    const risk = p.genotox_alerts?.length>0||p.mutagenicity_risk==='HIGH'||p.aqueous_solubility==='VERY LOW'?'HIGH':
+                 p.hydrolysis_risk==='HIGH'||p.oxidation_risk==='HIGH'||p.chiral_centers>0?'MODERATE':'LOW';
+    const stab = p.hydrolysis_risk==='HIGH'||p.oxidation_risk==='HIGH'?'⚠ Concerns':'✓ Stable';
+    const reg  = (p.regulatory_readiness||'').split('—')[0].trim();
+    return `<tr onclick="openProfile('${m.name}')" style="cursor:pointer" data-risk="${risk}" data-genotox="${p.genotox_alerts?.length>0?'yes':'no'}">
+      <td>${i+1}</td>
+      <td style="font-weight:bold">${m.name}</td>
+      <td style="font-size:0.75rem;color:#8899bb">${m.category||'—'}</td>
+      <td>
+        <div class="score-bar">
+          <span style="color:${col};font-weight:bold;min-width:36px">${sc.toFixed(3)}</span>
+          <div class="bar-bg"><div class="bar-fill" style="width:${sc*100}%;background:${col}"></div></div>
+        </div>
+      </td>
+      <td>${p.mw||'—'}</td>
+      <td class="${p.aqueous_solubility==='HIGH'?'risk-LOW':p.aqueous_solubility==='VERY LOW'?'risk-HIGH':'risk-MODERATE'}">${p.aqueous_solubility||'—'}</td>
+      <td style="color:${stab.includes('⚠')?'#f59e0b':'#059669'}">${stab}</td>
+      <td>${p.genotox_alerts?.length>0?`<span class="tag tr">${p.genotox_alerts.length} alert(s)</span>`:'<span class="tag tg">Clean</span>'}</td>
+      <td>${(p.dmf_flags||[]).length} flag(s)</td>
+      <td style="font-size:0.75rem">${reg}</td>
+      <td>
+        <button class="btn btn-green" style="padding:4px 10px;font-size:0.72rem"
+          onclick="event.stopPropagation();downloadPDF('${m.name}','${m.profile?.smiles||''||portfolioSmiles(m.name)}','${m.category||'Unknown'}')">
+          PDF
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable(type, btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(type==='all'){ renderTable(portfolioData); return; }
+  if(type==='genotox'){
+    renderTable(portfolioData.filter(m=>m.profile?.genotox_alerts?.length>0));
+    return;
+  }
+  renderTable(portfolioData.filter(m=>{
+    const p=m.profile||{};
+    const risk = p.genotox_alerts?.length>0||p.mutagenicity_risk==='HIGH'||p.aqueous_solubility==='VERY LOW'?'HIGH':
+                 p.hydrolysis_risk==='HIGH'||p.oxidation_risk==='HIGH'||p.chiral_centers>0?'MODERATE':'LOW';
+    return risk===type;
+  }));
+}
+
+const SMILES_MAP = {
+  'Metformin':    'CN(C)C(=N)NC(=N)N',
+  'Atorvastatin': 'CC(C)c1c(C(=O)Nc2ccccc2F)c(-c2ccccc2)c(-c2ccc(F)cc2)n1CCC(O)CC(O)CC(=O)O',
+  'Amlodipine':   'CCOC(=O)C1=C(COCCN)NC(C)=C(C(=O)OCC)C1c1ccccc1Cl',
+  'Pantoprazole': 'COc1ccc2[nH]c(S(=O)Cc3ncc(OC)c(OC)c3OC)nc2c1',
+  'Losartan':     'CCCCc1nc(Cl)c(CO)n1Cc1ccc(-c2ccccc2-c2nnn[nH]2)cc1',
+  'Omeprazole':   'COc1ccc2[nH]c(S(=O)Cc3ncc(C)c(OC)c3C)nc2c1',
+  'Metoprolol':   'COCCC(C)Nc1ccc(OCC(O)CNC(C)C)cc1',
+  'Ciprofloxacin':'O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O',
+};
+function portfolioSmiles(name){ return SMILES_MAP[name]||''; }
+
+function openProfile(name){
+  const smiles = portfolioSmiles(name);
+  if(!smiles) return;
+  window.open(`/msn?load=${encodeURIComponent(smiles)}&name=${encodeURIComponent(name)}`, '_blank');
+}
+
+async function downloadPDF(name, smiles, category){
+  if(!smiles){ smiles=portfolioSmiles(name); }
+  if(!smiles){ alert('SMILES not available for '+name); return; }
+  const btn = event.target;
+  btn.textContent='...'; btn.disabled=true;
+  try{
+    const r = await fetch('/msn/report',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({smiles,name,category})
+    });
+    if(!r.ok){ alert('PDF generation failed for '+name); btn.textContent='PDF'; btn.disabled=false; return; }
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download=`QMolSim_${name}_Report.pdf`; a.click();
+  }catch(e){ alert('Error: '+e.message); }
+  btn.textContent='PDF'; btn.disabled=false;
+}
+
+async function downloadAllPDFs(){
+  const btn=event.target;
+  btn.textContent='Generating all PDFs...'; btn.disabled=true;
+  try{
+    const r=await fetch('/msn/report/portfolio');
+    if(!r.ok){alert('Failed');btn.textContent='⬇ Download All PDF Reports';btn.disabled=false;return;}
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='QMolSim_MSN_Portfolio_Reports.zip'; a.click();
+  }catch(e){alert('Error: '+e.message);}
+  btn.textContent='⬇ Download All PDF Reports'; btn.disabled=false;
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

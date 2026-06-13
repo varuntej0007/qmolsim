@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QMolSim — Quantum Drug Screening</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0a0e1a;color:#e0e6f0;min-height:100vh}
+header{background:linear-gradient(135deg,#0d1b3e,#1a2f6e);padding:20px 40px;border-bottom:1px solid #1D9E75;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+header h1{font-size:1.5rem;color:#1D9E75;letter-spacing:1px}
+header p{font-size:0.8rem;color:#8899bb;margin-top:3px}
+.badge{background:#1D9E75;color:#000;font-size:0.65rem;font-weight:bold;padding:2px 7px;border-radius:4px;margin-left:6px}
+.qbadge{background:#534AB7;color:#fff;font-size:0.65rem;font-weight:bold;padding:2px 7px;border-radius:4px;margin-left:6px}
+.container{max-width:1200px;margin:0 auto;padding:28px 20px}
+.input-card{background:#111827;border:1px solid #1e2d4a;border-radius:12px;padding:24px;margin-bottom:24px}
+.input-card h2{color:#1D9E75;margin-bottom:14px;font-size:0.95rem;text-transform:uppercase;letter-spacing:1px}
+.smiles-row{display:flex;gap:10px;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:240px;background:#0a0e1a;border:1px solid #2a3a5a;color:#e0e6f0;padding:11px 14px;border-radius:8px;font-size:0.9rem;font-family:monospace}
+input[type=text]:focus{outline:none;border-color:#1D9E75}
+.btn{background:#1D9E75;color:#000;border:none;padding:11px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.9rem;transition:background 0.2s}
+.btn:hover{background:#16b584}
+.btn:disabled{background:#1a3a2a;color:#3a6a5a;cursor:not-allowed}
+.btn-sec{background:#1a2535;border:1px solid #2a3a5a;color:#8899bb;padding:11px 18px;border-radius:8px;font-size:0.85rem;cursor:pointer;transition:all 0.2s}
+.btn-sec:hover{border-color:#1D9E75;color:#1D9E75}
+.btn-quantum{background:linear-gradient(135deg,#1a1060,#2a1a80);border:1px solid #534AB7;color:#a090ff;padding:11px 22px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.9rem;transition:all 0.2s;display:flex;align-items:center;gap:8px}
+.btn-quantum:hover{background:linear-gradient(135deg,#2a1a80,#3a2aa0);border-color:#7060ff}
+.btn-quantum:disabled{opacity:0.4;cursor:not-allowed}
+.presets{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.preset-btn{background:#1a2535;border:1px solid #2a3a5a;color:#8899bb;padding:5px 12px;border-radius:6px;font-size:0.78rem;cursor:pointer;transition:all 0.2s}
+.preset-btn:hover{border-color:#1D9E75;color:#1D9E75}
+.loading{display:none;text-align:center;padding:36px;color:#1D9E75;font-size:0.9rem}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid #1a3a2a;border-top:3px solid #1D9E75;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:10px}
+.qspinner{border-color:#1a1060;border-top-color:#534AB7}
+@keyframes spin{to{transform:rotate(360deg)}}
+.results{display:none}
+.score-hero{background:linear-gradient(135deg,#0d2a1e,#0d1b3e);border:1px solid #1D9E75;border-radius:12px;padding:24px;margin-bottom:18px;display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap}
+.score-circle{width:88px;height:88px;border-radius:50%;border:3px solid #1D9E75;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.score-circle .num{font-size:1.6rem;font-weight:bold;color:#1D9E75}
+.score-circle .lbl{font-size:0.6rem;color:#8899bb}
+.score-info{flex:1;min-width:200px}
+.score-info h2{font-size:1.2rem;margin-bottom:4px}
+.score-info .rec{color:#8899bb;font-size:0.85rem;margin-top:4px}
+.verdict-excellent{color:#1D9E75}
+.verdict-candidate{color:#f0a500}
+.verdict-reject{color:#e05050}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px;margin-bottom:14px}
+.card{background:#111827;border:1px solid #1e2d4a;border-radius:10px;padding:18px}
+.card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#4a6a9a;margin-bottom:12px}
+.prop-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a2535;font-size:0.85rem}
+.prop-row:last-child{border-bottom:none}
+.prop-row .lbl{color:#8899bb}
+.prop-row .val{color:#e0e6f0;font-weight:500}
+.pass{color:#1D9E75!important}
+.fail{color:#e05050!important}
+.warn{color:#f0a500!important}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:0.72rem;margin:2px}
+.tag-green{background:#0d3a2a;color:#1D9E75}
+.tag-red{background:#3a0d0d;color:#e05050}
+.tag-amber{background:#3a2a0d;color:#f0a500}
+.error-msg{background:#2a0d0d;border:1px solid #e05050;border-radius:8px;padding:14px;color:#e05050;display:none;margin-bottom:14px}
+.chart-card{background:#111827;border:1px solid #1e2d4a;border-radius:10px;padding:18px}
+.chart-card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#4a6a9a;margin-bottom:12px}
+canvas{max-height:260px}
+
+/* Explainability card */
+.explain-card{background:#0d1a10;border:1px solid #1D9E75;border-radius:10px;padding:18px;margin-bottom:14px}
+.explain-card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#1D9E75;margin-bottom:14px}
+.reason-item{display:flex;gap:10px;padding:5px 0;font-size:0.85rem;color:#c0d8c0;border-bottom:1px solid #0d2a1a}
+.reason-item:last-child{border-bottom:none}
+.reason-icon{flex-shrink:0;color:#1D9E75;font-weight:bold}
+.warning-item{display:flex;gap:10px;padding:5px 0;font-size:0.85rem;color:#d8c0a0;border-bottom:1px solid #2a1a0d}
+.warning-item:last-child{border-bottom:none}
+.warning-icon{flex-shrink:0;color:#f0a500;font-weight:bold}
+
+/* Quantum validation card */
+.quantum-card{background:linear-gradient(135deg,#0a0820,#0d1030);border:1px solid #534AB7;border-radius:10px;padding:18px;margin-bottom:14px}
+.quantum-card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#a090ff;margin-bottom:12px}
+.quantum-note{font-size:0.85rem;color:#8899bb;line-height:1.5;margin-bottom:14px}
+.quantum-result{display:none}
+.qprop-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1a1540;font-size:0.85rem}
+.qprop-row:last-child{border-bottom:none}
+.qprop-row .lbl{color:#8899bb}
+.qprop-row .val{color:#a090ff;font-weight:500}
+.q-loading{display:none;text-align:center;padding:20px;color:#a090ff;font-size:0.85rem}
+.q-error{display:none;background:#1a0820;border:1px solid #e05050;border-radius:6px;padding:10px;color:#e05050;font-size:0.82rem;margin-top:10px}
+.supported-list{font-size:0.78rem;color:#4a6a9a;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>⚛ QMolSim <span class="badge">POC v2.0</span><span class="qbadge">Quantum-Enhanced</span></h1>
+    <p>AI drug candidate screening with on-demand quantum validation — Raspberry Pi 5</p>
+  </div>
+  <div style="font-size:0.78rem;color:#4a6a9a;text-align:right">
+    Pipeline: GNN → ADMET → VQE<br>
+    <span style="color:#1D9E75">●</span> API Live
+  </div>
+</header>
+
+<div class="container">
+  <div class="input-card">
+    <h2>Drug Candidate Screening</h2>
+    <div class="smiles-row">
+      <input type="text" id="smilesInput" placeholder="SMILES e.g. CC(=O)Oc1ccccc1C(=O)O"/>
+      <input type="text" id="nameInput" placeholder="Name (optional)" style="max-width:160px"/>
+      <button class="btn" id="screenBtn" onclick="runScreen()">⚡ Screen</button>
+      <button class="btn-sec" onclick="runCompare()">Compare Panel ▶</button>
+    </div>
+    <div class="presets">
+      <span style="font-size:0.75rem;color:#4a6a9a;margin-right:4px">Quick load:</span>
+      <button class="preset-btn" onclick="loadPreset('CC(=O)Oc1ccccc1C(=O)O','Aspirin')">Aspirin</button>
+      <button class="preset-btn" onclick="loadPreset('CN1C=NC2=C1C(=O)N(C(=O)N2C)C','Caffeine')">Caffeine</button>
+      <button class="preset-btn" onclick="loadPreset('CC(=O)Nc1ccc(O)cc1','Paracetamol')">Paracetamol</button>
+      <button class="preset-btn" onclick="loadPreset('CC1=CC(=O)c2ccccc2C1=O','Menadione')">Menadione</button>
+      <button class="preset-btn" onclick="loadPreset('CC(C)Cc1ccc(cc1)C(C)C(=O)O','Ibuprofen')">Ibuprofen</button>
+      <button class="preset-btn" onclick="loadPreset('CC(=O)Nc1nnc(s1)S(=O)(=O)N','Acetazolamide')">Acetazolamide</button>
+      <button class="preset-btn" onclick="loadPreset('[H][H]','Hydrogen (VQE demo)')">H₂ (VQE)</button>
+      <button class="preset-btn" onclick="loadPreset('O','Water (VQE demo)')">H₂O (VQE)</button>
+      <button class="preset-btn" onclick="loadPreset('CCO','Ethanol (VQE demo)')">Ethanol (VQE)</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner" id="mainSpinner"></div>
+    <div id="loadingMsg">Running pipeline...</div>
+  </div>
+  <div class="error-msg" id="errorMsg"></div>
+
+  <!-- Single molecule result -->
+  <div class="results" id="results">
+
+    <!-- Score hero -->
+    <div class="score-hero">
+      <div class="score-circle">
+        <span class="num" id="scoreNum">0.00</span>
+        <span class="lbl">SCORE</span>
+      </div>
+      <div class="score-info">
+        <h2 id="verdictText"></h2>
+        <div id="moleculeName" style="color:#8899bb;font-size:0.85rem;margin-top:2px;font-family:monospace"></div>
+        <div class="rec" id="recText"></div>
+      </div>
+    </div>
+
+    <!-- Explainability -->
+    <div class="explain-card" id="explainCard">
+      <h3>Why this score? — Decision Explanation</h3>
+      <div id="reasonsList"></div>
+      <div id="warningsList" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Quantum validation -->
+    <div class="quantum-card">
+      <h3>⚛ Quantum Validation (Phase 1 — VQE)</h3>
+      <div class="quantum-note" id="quantumNote">
+        Quantum validation not yet run. VQE computes the exact ground-state energy of this molecule using quantum circuits — providing a more accurate electronic structure than classical approximations.
+      </div>
+      <div class="q-loading" id="qLoading">
+        <div class="spinner qspinner"></div>
+        <div id="qLoadingMsg">Initialising VQE...</div>
+      </div>
+      <div class="quantum-result" id="quantumResult">
+        <div class="qprop-row"><span class="lbl">Ground state energy</span><span class="val" id="q_energy_ha">—</span></div>
+        <div class="qprop-row"><span class="lbl">Energy (eV)</span><span class="val" id="q_energy_ev">—</span></div>
+        <div class="qprop-row"><span class="lbl">Qubits used</span><span class="val" id="q_qubits">—</span></div>
+        <div class="qprop-row"><span class="lbl">VQE runtime</span><span class="val" id="q_runtime">—</span></div>
+        <div class="qprop-row"><span class="lbl">Quantum score boost</span><span class="val pass">+0.05 applied</span></div>
+      </div>
+      <div class="q-error" id="qError"></div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn-quantum" id="vqeBtn" onclick="runVQE()">
+          ⚛ Run Quantum Validation
+        </button>
+        <div class="supported-list" id="supportedList"></div>
+      </div>
+    </div>
+
+    <!-- Properties -->
+    <div class="grid3">
+      <div class="card">
+        <h3>Phase 2 — GNN Binding</h3>
+        <div class="prop-row"><span class="lbl">ΔG (kcal/mol)</span><span class="val" id="r_dg">—</span></div>
+        <div class="prop-row"><span class="lbl">Drug-likeness QED</span><span class="val" id="r_qed">—</span></div>
+        <div class="prop-row"><span class="lbl">GNN Verdict</span><span class="val" id="r_gnn_verdict">—</span></div>
+      </div>
+      <div class="card">
+        <h3>Phase 3 — ADMET</h3>
+        <div class="prop-row"><span class="lbl">MW (Da)</span><span class="val" id="r_mw">—</span></div>
+        <div class="prop-row"><span class="lbl">LogP</span><span class="val" id="r_logp">—</span></div>
+        <div class="prop-row"><span class="lbl">HBD / HBA</span><span class="val" id="r_hbdhba">—</span></div>
+        <div class="prop-row"><span class="lbl">TPSA (Å²)</span><span class="val" id="r_tpsa">—</span></div>
+        <div class="prop-row"><span class="lbl">Lipinski RO5</span><span class="val" id="r_lipinski">—</span></div>
+        <div class="prop-row"><span class="lbl">Veber</span><span class="val" id="r_veber">—</span></div>
+        <div class="prop-row"><span class="lbl">GI Absorption</span><span class="val" id="r_gi">—</span></div>
+        <div class="prop-row"><span class="lbl">BBB</span><span class="val" id="r_bbb">—</span></div>
+        <div class="prop-row"><span class="lbl">ADMET Score</span><span class="val" id="r_admet">—</span></div>
+      </div>
+      <div class="card">
+        <h3>Safety</h3>
+        <div class="prop-row"><span class="lbl">PAINS alerts</span><span class="val" id="r_pains">—</span></div>
+        <div style="margin-top:8px;font-size:0.75rem;color:#4a6a9a">Toxicity alerts:</div>
+        <div id="r_tox" style="margin-top:5px;min-height:20px"></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid2">
+      <div class="chart-card">
+        <h3>Drug Profile Radar</h3>
+        <canvas id="radarChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Score Breakdown</h3>
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compare panel -->
+  <div id="compareResults" style="display:none">
+    <div class="chart-card" style="margin-bottom:14px">
+      <h3>Panel Comparison — Overall Score</h3>
+      <canvas id="compareBar" style="max-height:300px"></canvas>
+    </div>
+    <div class="chart-card" style="margin-bottom:14px">
+      <h3>Binding Affinity vs ADMET Score</h3>
+      <canvas id="scatterChart" style="max-height:300px"></canvas>
+    </div>
+    <div class="card" id="compareTable"></div>
+  </div>
+</div>
+
+<script>
+let radarObj=null, barObj=null, cmpBarObj=null, scatterObj=null;
+let currentSmiles='', currentName='';
+const COLORS=['#1D9E75','#4a9eff','#f0a500','#e05050','#a855f7','#ec4899'];
+
+function loadPreset(s,n){
+  document.getElementById('smilesInput').value=s;
+  document.getElementById('nameInput').value=n;
+}
+
+function showLoading(msg,quantum=false){
+  document.getElementById('results').style.display='none';
+  document.getElementById('compareResults').style.display='none';
+  document.getElementById('errorMsg').style.display='none';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('loadingMsg').textContent=msg;
+  document.getElementById('mainSpinner').className='spinner'+(quantum?' qspinner':'');
+}
+function hideLoading(){ document.getElementById('loading').style.display='none'; }
+function showError(m){ const e=document.getElementById('errorMsg'); e.textContent='Error: '+m; e.style.display='block'; }
+
+async function runScreen(){
+  const smiles=document.getElementById('smilesInput').value.trim();
+  const name=document.getElementById('nameInput').value.trim()||'candidate';
+  if(!smiles){alert('Please enter a SMILES string');return;}
+  currentSmiles=smiles; currentName=name;
+
+  document.getElementById('screenBtn').disabled=true;
+  showLoading('Building molecular graph...');
+  const msgs=['Running GNN binding predictor...','Computing ADMET properties...','Scoring candidate...','Generating explanation...'];
+  let mi=0;
+  const iv=setInterval(()=>{ document.getElementById('loadingMsg').textContent=msgs[mi++%msgs.length]; },600);
+
+  try{
+    const res=await fetch('/screen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles,name,run_vqe:false})});
+    const d=await res.json();
+    clearInterval(iv); hideLoading();
+    document.getElementById('screenBtn').disabled=false;
+    if(d.error){showError(d.error);return;}
+    renderResult(d);
+  }catch(e){
+    clearInterval(iv); hideLoading();
+    document.getElementById('screenBtn').disabled=false;
+    showError(e.message);
+  }
+}
+
+async function runVQE(){
+  if(!currentSmiles){alert('Screen a molecule first');return;}
+  const btn=document.getElementById('vqeBtn');
+  btn.disabled=true;
+  btn.textContent='⚛ Running VQE...';
+
+  document.getElementById('qLoading').style.display='block';
+  document.getElementById('quantumResult').style.display='none';
+  document.getElementById('qError').style.display='none';
+
+  const qMsgs=['Initialising VQE...','Building Hamiltonian...','Running UCCSD ansatz...','Optimising parameters...','Converging ground state...'];
+  let qi=0;
+  const qiv=setInterval(()=>{ document.getElementById('qLoadingMsg').textContent=qMsgs[qi++%qMsgs.length]; },1200);
+
+  try{
+    const res=await fetch('/vqe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles:currentSmiles,name:currentName})});
+    const d=await res.json();
+    clearInterval(qiv);
+    document.getElementById('qLoading').style.display='none';
+    btn.disabled=false;
+    btn.textContent='⚛ Re-run Quantum Validation';
+
+    if(d.error){
+      const qe=document.getElementById('qError');
+      qe.innerHTML='<b>VQE not available for this molecule:</b><br>'+d.error+
+        (d.supported?'<br><br>Supported SMILES for VQE demo:<br>'+d.supported.join(' &nbsp;|&nbsp; '):'');
+      qe.style.display='block';
+      document.getElementById('quantumNote').textContent='VQE requires XYZ geometry. Currently supported for small molecules: H₂, H₂O, ethanol, methane, LiH.';
+      return;
+    }
+
+    if(d.vqe_success){
+      document.getElementById('q_energy_ha').textContent=d.vqe_energy_ha.toFixed(6)+' Ha';
+      document.getElementById('q_energy_ev').textContent=d.vqe_energy_ev.toFixed(4)+' eV';
+      document.getElementById('q_qubits').textContent=d.vqe_qubits+' qubits';
+      document.getElementById('q_runtime').textContent=d.vqe_runtime_s.toFixed(1)+'s';
+      document.getElementById('quantumResult').style.display='block';
+      document.getElementById('quantumNote').textContent=d.quantum_note||'Quantum validation complete.';
+
+      // Update score
+      document.getElementById('scoreNum').textContent=d.overall_score.toFixed(3);
+      const vEl=document.getElementById('verdictText');
+      vEl.textContent=d.overall_verdict;
+      vEl.className=d.overall_score>=0.65?'verdict-excellent':d.overall_score>=0.45?'verdict-candidate':'verdict-reject';
+      document.getElementById('recText').textContent='→ '+d.recommendation;
+    } else {
+      document.getElementById('qError').textContent='VQE did not converge for this molecule. GNN prediction stands.';
+      document.getElementById('qError').style.display='block';
+    }
+  }catch(e){
+    clearInterval(qiv);
+    document.getElementById('qLoading').style.display='none';
+    btn.disabled=false;
+    btn.textContent='⚛ Run Quantum Validation';
+    document.getElementById('qError').textContent='Network error: '+e.message;
+    document.getElementById('qError').style.display='block';
+  }
+}
+
+function renderResult(d){
+  // Score hero
+  document.getElementById('scoreNum').textContent=d.overall_score.toFixed(3);
+  const vEl=document.getElementById('verdictText');
+  vEl.textContent=d.overall_verdict;
+  vEl.className=d.overall_score>=0.65?'verdict-excellent':d.overall_score>=0.45?'verdict-candidate':'verdict-reject';
+  document.getElementById('moleculeName').textContent=d.molecule_name+' — '+d.smiles.substring(0,45);
+  document.getElementById('recText').textContent='→ '+d.recommendation;
+
+  // Explainability
+  const rList=document.getElementById('reasonsList');
+  const wList=document.getElementById('warningsList');
+  rList.innerHTML=(d.reasons||[]).map(r=>`<div class="reason-item"><span class="reason-icon">✓</span><span>${r}</span></div>`).join('');
+  wList.innerHTML=(d.warnings||[]).map(w=>`<div class="warning-item"><span class="warning-icon">⚠</span><span>${w}</span></div>`).join('');
+
+  // Quantum card reset
+  document.getElementById('quantumNote').textContent=d.quantum_note||'Quantum validation not yet run. Click Run Quantum Validation for ground-state energy analysis.';
+  document.getElementById('quantumResult').style.display='none';
+  document.getElementById('qError').style.display='none';
+  document.getElementById('qLoading').style.display='none';
+  document.getElementById('vqeBtn').disabled=false;
+  document.getElementById('vqeBtn').textContent='⚛ Run Quantum Validation';
+
+  // Properties
+  document.getElementById('r_dg').textContent=d.gnn_dg_kcal?d.gnn_dg_kcal.toFixed(2)+' kcal/mol':'—';
+  document.getElementById('r_qed').textContent=d.gnn_qed?d.gnn_qed.toFixed(3):'—';
+  document.getElementById('r_gnn_verdict').textContent=d.gnn_verdict||'—';
+  document.getElementById('r_mw').textContent=d.mw+' Da';
+  document.getElementById('r_logp').textContent=d.logp;
+  document.getElementById('r_hbdhba').textContent=(d.hbd||0)+' / '+(d.hba||0);
+  document.getElementById('r_tpsa').textContent=(d.tpsa||0).toFixed(1);
+  document.getElementById('r_lipinski').innerHTML=d.lipinski_pass?'<span class="pass">✓ PASS</span>':'<span class="fail">✗ FAIL</span>';
+  document.getElementById('r_veber').innerHTML=d.veber_pass?'<span class="pass">✓ PASS</span>':'<span class="fail">✗ FAIL</span>';
+  document.getElementById('r_gi').innerHTML=d.gi_absorption==='HIGH'?'<span class="pass">HIGH</span>':'<span class="warn">LOW</span>';
+  document.getElementById('r_bbb').innerHTML=d.bbb_likely?'<span class="pass">Likely</span>':'<span class="val">Unlikely</span>';
+  document.getElementById('r_admet').textContent=(d.admet_score?d.admet_score.toFixed(3):'—')+'  '+(d.admet_verdict||'');
+  document.getElementById('r_pains').innerHTML=d.pains_alerts===0?'<span class="pass">0 — Clean</span>':`<span class="warn">${d.pains_alerts} alert(s)</span>`;
+  document.getElementById('r_tox').innerHTML=(!d.tox_alerts||d.tox_alerts.length===0)?'<span class="tag tag-green">None detected</span>':d.tox_alerts.map(t=>`<span class="tag tag-red">${t}</span>`).join('');
+
+  // Radar
+  const dg_n=d.gnn_dg_kcal?Math.max(0,Math.min(1,(-d.gnn_dg_kcal-3)/7)):0;
+  const safe_n=1-Math.min(1,(d.tox_alerts?d.tox_alerts.length:0)/3+(d.pains_alerts||0)*0.2);
+  if(radarObj)radarObj.destroy();
+  radarObj=new Chart(document.getElementById('radarChart'),{
+    type:'radar',
+    data:{
+      labels:['Binding','ADMET','Drug-like','Safety','Oral Bio'],
+      datasets:[{label:d.molecule_name,data:[dg_n,(d.admet_score||0),(d.gnn_qed||0),safe_n,(d.lipinski_pass&&d.veber_pass?1:0.5)],backgroundColor:'rgba(29,158,117,0.15)',borderColor:'#1D9E75',pointBackgroundColor:'#1D9E75',borderWidth:2}]
+    },
+    options:{scales:{r:{min:0,max:1,ticks:{display:false},grid:{color:'#1e2d4a'},pointLabels:{color:'#8899bb',font:{size:11}}}},plugins:{legend:{labels:{color:'#e0e6f0'}}}}
+  });
+
+  // Bar
+  const dg_c=d.gnn_dg_kcal?(0.40*dg_n):0;
+  const ad_c=d.admet_score?(0.35*d.admet_score):0;
+  const qd_c=d.gnn_qed?(0.25*d.gnn_qed):0;
+  if(barObj)barObj.destroy();
+  barObj=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels:['Binding (40%)','ADMET (35%)','Drug-like (25%)'],datasets:[{data:[dg_c.toFixed(3),ad_c.toFixed(3),qd_c.toFixed(3)],backgroundColor:['#1D9E75','#4a9eff','#f0a500'],borderRadius:6}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{max:0.5,grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}},y:{grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}}}}
+  });
+
+  document.getElementById('results').style.display='block';
+}
+
+async function runCompare(){
+  showLoading('Screening comparison panel...');
+  try{
+    const res=await fetch('/screen/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const data=await res.json();
+    hideLoading();
+    renderCompare(data);
+  }catch(e){ hideLoading(); showError(e.message); }
+}
+
+function renderCompare(data){
+  const names=data.map(d=>d.molecule_name);
+  const scores=data.map(d=>d.overall_score);
+  const dgs=data.map(d=>d.gnn_dg_kcal?Math.abs(d.gnn_dg_kcal):0);
+  const admets=data.map(d=>d.admet_score||0);
+
+  if(cmpBarObj)cmpBarObj.destroy();
+  cmpBarObj=new Chart(document.getElementById('compareBar'),{
+    type:'bar',
+    data:{labels:names,datasets:[{label:'Overall Score',data:scores,backgroundColor:scores.map(s=>s>=0.65?'#1D9E75':s>=0.45?'#f0a500':'#e05050'),borderRadius:6}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{min:0,max:1,grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}},x:{grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}}}}
+  });
+
+  if(scatterObj)scatterObj.destroy();
+  scatterObj=new Chart(document.getElementById('scatterChart'),{
+    type:'scatter',
+    data:{datasets:[{label:'Molecules',data:data.map((d,i)=>({x:dgs[i],y:admets[i],label:d.molecule_name})),backgroundColor:COLORS,pointRadius:10,pointHoverRadius:13}]},
+    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.label}: |ΔG|=${c.raw.x.toFixed(2)}, ADMET=${c.raw.y.toFixed(3)}`}}},scales:{x:{title:{display:true,text:'|ΔG| kcal/mol',color:'#8899bb'},grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}},y:{title:{display:true,text:'ADMET Score',color:'#8899bb'},grid:{color:'#1e2d4a'},ticks:{color:'#8899bb'}}}}
+  });
+
+  document.getElementById('compareTable').innerHTML=`
+    <h3 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#4a6a9a;margin-bottom:12px">Ranked Results</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+      <tr style="color:#4a6a9a;border-bottom:1px solid #1e2d4a">
+        <th style="text-align:left;padding:5px">Rank</th>
+        <th style="text-align:left;padding:5px">Molecule</th>
+        <th style="text-align:right;padding:5px">Score</th>
+        <th style="text-align:right;padding:5px">ΔG</th>
+        <th style="text-align:right;padding:5px">ADMET</th>
+        <th style="text-align:left;padding:5px">Verdict</th>
+      </tr>
+      ${data.map((d,i)=>`
+        <tr style="border-bottom:1px solid #1a2535">
+          <td style="padding:7px 5px;color:#4a6a9a">${i+1}</td>
+          <td style="padding:7px 5px">${d.molecule_name}</td>
+          <td style="padding:7px 5px;text-align:right;color:${d.overall_score>=0.65?'#1D9E75':d.overall_score>=0.45?'#f0a500':'#e05050'};font-weight:bold">${d.overall_score.toFixed(3)}</td>
+          <td style="padding:7px 5px;text-align:right">${d.gnn_dg_kcal?d.gnn_dg_kcal.toFixed(2):'—'}</td>
+          <td style="padding:7px 5px;text-align:right">${d.admet_score?d.admet_score.toFixed(3):'—'}</td>
+          <td style="padding:7px 5px;font-size:0.78rem">${d.overall_verdict}</td>
+        </tr>`).join('')}
+    </table>`;
+
+  document.getElementById('compareResults').style.display='block';
+}
+
+document.getElementById('smilesInput').addEventListener('keydown',e=>{ if(e.key==='Enter')runScreen(); });
+</script>
+</body>
+</html>

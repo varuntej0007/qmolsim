@@ -1,0 +1,32 @@
+{
+  "molecules": [
+    {
+      "name": "Hydrogen",
+      "smiles": "[H][H]",
+      "geometry": "H 0 0 0; H 0 0 0.735",
+      "description": "H2 — simplest benchmark, exact energy known",
+      "expected_energy_ha": -1.1373
+    },
+    {
+      "name": "LiH",
+      "smiles": "[LiH]",
+      "geometry": "Li 0 0 0; H 0 0 1.6",
+      "description": "Lithium hydride — 4-qubit benchmark",
+      "expected_energy_ha": -7.8823
+    },
+    {
+      "name": "Water",
+      "smiles": "O",
+      "geometry": "O 0 0 0; H 0.757 0.586 0; H -0.757 0.586 0",
+      "description": "Water — hydration energy relevant to drug binding",
+      "expected_energy_ha": -75.0119
+    },
+    {
+      "name": "Methane",
+      "smiles": "C",
+      "geometry": "C 0 0 0; H 0.629 0.629 0.629; H -0.629 -0.629 0.629; H -0.629 0.629 -0.629; H 0.629 -0.629 -0.629",
+      "description": "Methane — simplest carbon scaffold",
+      "expected_energy_ha": -40.1985
+    }
+  ]
+}
